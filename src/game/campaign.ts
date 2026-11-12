@@ -16,6 +16,8 @@ export type CampaignLevel = {
   targetScore: number;
   moveLimit: number;
   seed: number;
+  objective: 'score' | 'tiles' | 'chain';
+  objectiveTarget: number;
 };
 
 function levelSeed(level: number): number {
@@ -36,9 +38,11 @@ export function getCampaignLevel(level: number): CampaignLevel {
     chapter: chapter + 1,
     chapterName: CAMPAIGN_CHAPTERS[chapter],
     title: chapterLevel % 10 === 0 ? 'Pattern test' : chapterLevel % 5 === 0 ? 'Combo test' : 'Puzzle',
-    targetScore: 350 + safeLevel * 28,
+    targetScore: 350 + safeLevel * 10,
     moveLimit: Math.max(10, 18 - Math.floor((safeLevel - 1) / 125)),
     seed: levelSeed(safeLevel),
+    objective: safeLevel % 5 === 0 ? 'chain' : safeLevel % 3 === 0 ? 'tiles' : 'score',
+    objectiveTarget: safeLevel % 5 === 0 ? (safeLevel >= 250 ? 2 : 1) : safeLevel % 3 === 0 ? 18 + Math.floor(safeLevel / 12) : 0,
   };
 }
 
@@ -51,6 +55,23 @@ export function createCampaignBoard(level: number): Board {
     attempt += 1;
   }
   return createBoard(mulberry32(seed));
+}
+
+export function isCampaignObjectiveComplete(
+  level: CampaignLevel,
+  score: number,
+  tilesCleared: number,
+  lastChainCount: number,
+): boolean {
+  if (level.objective === 'score') return score >= level.targetScore;
+  if (level.objective === 'tiles') return tilesCleared >= level.objectiveTarget;
+  return lastChainCount >= level.objectiveTarget;
+}
+
+export function campaignObjectiveLabel(level: CampaignLevel): string {
+  if (level.objective === 'score') return `Reach ${level.targetScore.toLocaleString()} points`;
+  if (level.objective === 'tiles') return `Clear ${level.objectiveTarget} tiles`;
+  return `Trigger a chain of ${level.objectiveTarget} wave${level.objectiveTarget === 1 ? '' : 's'}`;
 }
 
 export function starsForCampaignScore(score: number, targetScore: number): number {

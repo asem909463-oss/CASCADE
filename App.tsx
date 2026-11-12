@@ -38,7 +38,7 @@ import {
 } from './src/game/engine';
 import { completeDailyChallenge, DEFAULT_SAVE, GameSnapshot, getActiveDailyStreak, loadSave, saveData, SaveData } from './src/storage/save';
 import { COLORS, TYPE } from './src/theme/tokens';
-import { CAMPAIGN_CHAPTERS, CAMPAIGN_LEVEL_COUNT, createCampaignBoard, getCampaignLevel, starsForCampaignScore } from './src/game/campaign';
+import { CAMPAIGN_CHAPTERS, CAMPAIGN_LEVEL_COUNT, campaignObjectiveLabel, createCampaignBoard, getCampaignLevel, isCampaignObjectiveComplete, starsForCampaignScore } from './src/game/campaign';
 import { completeCampaignLevel } from './src/storage/save';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -62,6 +62,7 @@ export default function App() {
   const [mode, setMode] = useState<Mode>('endless');
   const [campaignLevel, setCampaignLevel] = useState(1);
   const [campaignWon, setCampaignWon] = useState(false);
+  const campaignSuccessRef = useRef(false);
   const [board, setBoard] = useState<Board>(() => createBoard());
   const [score, setScore] = useState(0);
   const [chain, setChain] = useState(0);
@@ -225,11 +226,11 @@ export default function App() {
     );
   }, [save.currentRun, startGame]);
 
-  const finishGame = useCallback((finalScore: number, tilesCleared: number) => {
+  const finishGame = useCallback((finalScore: number, tilesCleared: number, campaignSuccess = false) => {
     if (finishedRef.current) return;
     finishedRef.current = true;
     const level = mode === 'campaign' ? getCampaignLevel(campaignLevel) : null;
-    const wonCampaign = !!level && finalScore >= level.targetScore;
+    const wonCampaign = !!level && campaignSuccess;
     if (mode === 'campaign') setCampaignWon(wonCampaign);
     setSave((current) => ({
       ...current,
@@ -315,9 +316,9 @@ export default function App() {
       const left = movesLeft - 1;
       nextMovesLeft = left;
       setMovesLeft(left);
-      const levelGoalReached = mode === 'campaign' && nextScore >= getCampaignLevel(campaignLevel).targetScore;
+      const levelGoalReached = mode === 'campaign' && isCampaignObjectiveComplete(getCampaignLevel(campaignLevel), nextScore, tilesClearedRef.current, result.chainCount);
       if (levelGoalReached || left <= 0 || result.gameOver) {
-        finishGame(nextScore, tilesClearedRef.current);
+        finishGame(nextScore, tilesClearedRef.current, levelGoalReached);
         return;
       }
     } else if (result.gameOver || !hasValidMove(result.board)) {
@@ -341,7 +342,13 @@ export default function App() {
   }, [board, campaignLevel, clearFade, feedback, finishGame, gameDate, mode, movesLeft, reduceMotion, score, selectedPosition]);
 
   const playAgain = () => startGame(mode, mode === 'campaign' && campaignWon ? Math.min(500, campaignLevel + 1) : campaignLevel);
-  const startCampaignLevel = (level: number) => startGame('campaign', level);
+  const startCampaignLevel = (level: number) => {
+    if (!save.currentRun) { startGame('campaign', level); return; }
+    Alert.alert('Start a campaign puzzle?', 'Your unfinished run will be replaced by this puzzle.', [
+      { text: 'Keep current run', style: 'cancel' },
+      { text: 'Start puzzle', style: 'destructive', onPress: () => startGame('campaign', level) },
+    ]);
+  };
   const backToHome = () => setScreen('home');
   const togglePreference = (key: 'soundEnabled' | 'hapticsEnabled') => {
     setSave((current) => ({ ...current, [key]: !current[key] }));
@@ -384,6 +391,7 @@ export default function App() {
           campaignLevel={campaignLevel}
           score={score}
           best={save.highScore}
+          campaignObjective={mode === 'campaign' ? campaignObjectiveLabel(getCampaignLevel(campaignLevel)) : ''}
           chain={chain}
           movesLeft={movesLeft}
           lastClear={lastClear}
@@ -636,6 +644,7 @@ function GameScreen({
   mode,
   dailyDate,
   campaignLevel,
+  campaignObjective,
   score,
   best,
   chain,
@@ -654,6 +663,7 @@ function GameScreen({
   mode: Mode;
   dailyDate: string;
   campaignLevel: number;
+  campaignObjective: string;
   score: number;
   best: number;
   chain: number;
@@ -694,9 +704,9 @@ function GameScreen({
       </View>
       {(mode === 'daily' || mode === 'campaign') && (
         <View style={styles.goalRow}>
-          <Text style={styles.goalText}>{mode === 'campaign' ? 'LEVEL GOAL' : 'CHALLENGE MARK'}</Text>
+          <Text style={styles.goalText}>{mode === 'campaign' ? 'LEVEL OBJECTIVE' : 'CHALLENGE MARK'}</Text>
           <View style={styles.goalTrack}><View style={[styles.goalFill, { width: `${Math.min(100, (score / (mode === 'campaign' ? getCampaignLevel(campaignLevel).targetScore : DAILY_GOAL)) * 100)}%` }]} /></View>
-          <Text style={styles.goalValue}>{(mode === 'campaign' ? getCampaignLevel(campaignLevel).targetScore : DAILY_GOAL).toLocaleString()}</Text>
+          <Text style={styles.goalValue}>{mode === 'campaign' ? campaignObjective : DAILY_GOAL.toLocaleString()}</Text>
         </View>
       )}
       <View style={styles.boardStage}>
@@ -759,7 +769,7 @@ function ResultScreen({
         : mode === 'campaign' ? `PUZZLE JOURNEY · LEVEL ${campaignLevel}` : 'A LOVELY LITTLE RUN'}</Text>
       <Text style={styles.resultTitle}>{mode === 'campaign' ? (campaignWon ? 'Puzzle solved!' : 'Not quite yet.') : isNewBest ? 'New personal best.' : 'Nicely done.'}</Text>
       <Text style={styles.resultScore}>{score.toLocaleString()}</Text>
-      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${starsForCampaignScore(score, getCampaignLevel(campaignLevel).targetScore)} stars earned · new puzzle unlocked` : 'Reach the target score to unlock the next puzzle') : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
+      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${starsForCampaignScore(score, getCampaignLevel(campaignLevel).targetScore)} stars earned · new puzzle unlocked` : `Objective: ${campaignObjectiveLabel(getCampaignLevel(campaignLevel))}`) : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
       {mode === 'daily' && <Text style={styles.dailyRecord}>CHALLENGE BEST · {dailyBest.toLocaleString()}</Text>}
       <View style={styles.resultDecor}><MiniMosaic width={176} /></View>
       <View style={styles.resultButtons}>
