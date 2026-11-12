@@ -334,6 +334,7 @@ export default function App() {
         </View>
       ) : (
         <>
+      <ScreenEntrance key={screen} reduceMotion={reduceMotion}>
       {screen === 'home' && (
         <HomeScreen
           width={screenWidth}
@@ -383,6 +384,7 @@ export default function App() {
         <SettingsScreen save={save} onBack={backToHome} onToggle={togglePreference} onPrivacy={() => setScreen('privacy')} />
       )}
       {screen === 'privacy' && <PrivacyScreen onBack={() => setScreen('settings')} />}
+      </ScreenEntrance>
         </>
       )}
       </SafeAreaView>
@@ -498,11 +500,21 @@ function BrandMark() {
 }
 
 function MiniMosaic({ width }: { width: number }) {
+  const float = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const motion = Animated.loop(Animated.sequence([
+      Animated.timing(float, { toValue: 1, duration: 1900, useNativeDriver: true }),
+      Animated.timing(float, { toValue: 0, duration: 1900, useNativeDriver: true }),
+    ]));
+    motion.start();
+    return () => motion.stop();
+  }, [float]);
   const colors = ['#F06B57', '#F4BD56', '#6FB99E', '#6E9DCA', '#9D83C7'];
   const sequence = [0, 2, 1, 3, 1, 0, 4, 2, 3, 4, 0, 2, 1, 3, 4, 0];
   return (
     <View style={[styles.mosaicWrap, { width, height: width * 0.68 }]}>
       <View style={[styles.mosaicOrb, { width: width * 0.72, height: width * 0.72, borderRadius: width }]} />
+      <Animated.View style={{ transform: [{ translateY: float.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }), }, { scale: float.interpolate({ inputRange: [0, 1], outputRange: [1, 1.025] })] }}>
       <View style={styles.mosaicGrid}>
         {sequence.map((color, index) => (
           <View key={index} style={[styles.mosaicTile, { backgroundColor: colors[color], transform: [{ rotate: `${(index % 3 - 1) * 3}deg` }] }]}>
@@ -510,6 +522,7 @@ function MiniMosaic({ width }: { width: number }) {
           </View>
         ))}
       </View>
+      </Animated.View>
       <View style={styles.sparkOne}><Text style={styles.sparkText}>✦</Text></View>
       <View style={styles.sparkTwo}><Text style={styles.sparkTextSmall}>·</Text></View>
     </View>
@@ -794,6 +807,16 @@ function PreferenceRow({ title, description, enabled, onPress, last = false }: {
   );
 }
 
+function ScreenEntrance({ children, reduceMotion }: { children: React.ReactNode; reduceMotion: boolean }) {
+  const progress = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
+  useEffect(() => {
+    if (reduceMotion) { progress.setValue(1); return; }
+    progress.setValue(0);
+    Animated.spring(progress, { toValue: 1, speed: 17, bounciness: 3, useNativeDriver: true }).start();
+  }, [progress, reduceMotion]);
+  return <Animated.View style={{ flex: 1, opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }}>{children}</Animated.View>;
+}
+
 function SimpleShell({ title, eyebrow, onBack, children }: { title: string; eyebrow: string; onBack: () => void; children: React.ReactNode }) {
   return (
     <ScrollView contentContainerStyle={styles.simpleContent} showsVerticalScrollIndicator={false}>
@@ -897,6 +920,11 @@ const styles = StyleSheet.create({
   wordmark: { fontFamily: TYPE.display, fontSize: 42, letterSpacing: 3.1, color: COLORS.ink, lineHeight: 49 },
   homeSubtitle: { marginTop: 8, textAlign: 'center', fontFamily: TYPE.display, fontStyle: 'italic', fontSize: 17, color: COLORS.inkSoft, lineHeight: 24 },
   mosaicWrap: { alignSelf: 'center', marginTop: 12, marginBottom: 3, alignItems: 'center', justifyContent: 'center' },
+  dailyStreakBanner: { marginTop: 7, marginBottom: 8, minHeight: 58, borderRadius: 18, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF0D6', borderWidth: 1, borderColor: '#FFE0AA' },
+  dailyStreakSpark: { color: '#F29B38', fontSize: 25, fontWeight: '900' },
+  dailyStreakTitle: { color: '#B87531', fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
+  dailyStreakCopy: { color: '#8F725B', fontSize: 10, marginTop: 3 },
+  dailyStreakCount: { color: '#E99C3E', fontFamily: TYPE.mono, fontSize: 23, fontWeight: '900' },
   mosaicOrb: { position: 'absolute', backgroundColor: '#EFE9DD', opacity: 0.92 },
   mosaicGrid: { width: '67%', aspectRatio: 1, flexDirection: 'row', flexWrap: 'wrap', padding: 5, gap: 4, transform: [{ rotate: '-4deg' }], zIndex: 1 },
   mosaicTile: { width: '22%', height: '22%', borderRadius: 8, borderBottomWidth: 2.5, borderBottomColor: 'rgba(40,40,40,0.18)', alignItems: 'center', justifyContent: 'center' },
@@ -912,13 +940,13 @@ const styles = StyleSheet.create({
   resumeCopy: { flex: 1, gap: 3 },
   resumeTitle: { color: COLORS.ink, fontSize: 13, fontWeight: '800' },
   resumeSubtitle: { color: COLORS.muted, fontSize: 10.5 },
-  primaryButton: { minHeight: 67, borderRadius: 20, backgroundColor: COLORS.ink, paddingHorizontal: 19, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: COLORS.shadow, shadowOpacity: 0.15, shadowOffset: { width: 0, height: 5 }, shadowRadius: 11, elevation: 3 },
+  primaryButton: { minHeight: 67, borderRadius: 20, backgroundColor: COLORS.coral, paddingHorizontal: 19, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: COLORS.shadow, shadowOpacity: 0.15, shadowOffset: { width: 0, height: 5 }, shadowRadius: 11, elevation: 3 },
   primaryPressed: { transform: [{ scale: 0.987 }], backgroundColor: '#243536' },
   primaryTextWrap: { gap: 3 },
-  primaryTitle: { color: COLORS.paperBright, fontSize: 16, fontWeight: '800', letterSpacing: 0.2 },
-  primarySubtitle: { color: '#C8D0C9', fontSize: 11 },
-  primaryArrow: { width: 34, height: 34, borderRadius: 12, backgroundColor: COLORS.coral, alignItems: 'center', justifyContent: 'center' },
-  primaryArrowText: { color: COLORS.white, fontSize: 18, fontWeight: '800', marginTop: -2 },
+  primaryTitle: { color: COLORS.white, fontSize: 16, fontWeight: '800', letterSpacing: 0.2 },
+  primarySubtitle: { color: '#FFF0E7', fontSize: 11 },
+  primaryArrow: { width: 34, height: 34, borderRadius: 12, backgroundColor: COLORS.gold, alignItems: 'center', justifyContent: 'center' },
+  primaryArrowText: { color: '#9B5A27', fontSize: 18, fontWeight: '800', marginTop: -2 },
   dailyCard: { minHeight: 66, borderRadius: 19, backgroundColor: COLORS.paperBright, borderWidth: 1, borderColor: COLORS.line, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 11 },
   dailySeal: { width: 36, height: 36, borderRadius: 13, backgroundColor: '#FAE8BF', alignItems: 'center', justifyContent: 'center' },
   dailySealText: { color: '#9F7024', fontFamily: TYPE.display, fontWeight: '700', fontSize: 19 },
@@ -933,7 +961,8 @@ const styles = StyleSheet.create({
   recordValue: { marginTop: 3, color: COLORS.ink, fontFamily: TYPE.mono, fontSize: 14, fontWeight: '700' },
   footerDivider: { width: 1, height: 26, backgroundColor: COLORS.line },
   footerStat: { minWidth: 52 },
-  statsLink: { marginLeft: 'auto', color: COLORS.inkSoft, fontSize: 11, fontWeight: '700' },
+  statsLinkButton: { marginLeft: 'auto', paddingVertical: 10, paddingHorizontal: 4 },
+  statsLink: { color: COLORS.inkSoft, fontSize: 11, fontWeight: '700' },
   offlineNote: { textAlign: 'center', color: '#A9A69D', fontSize: 8, fontWeight: '700', letterSpacing: 1.6, marginTop: 10 },
   gamePage: { flex: 1, paddingHorizontal: 18, paddingBottom: 10, justifyContent: 'space-between' },
   gameHeader: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -955,7 +984,7 @@ const styles = StyleSheet.create({
   goalFill: { height: 4, borderRadius: 8, backgroundColor: COLORS.coral },
   goalValue: { color: COLORS.muted, fontFamily: TYPE.mono, fontSize: 9 },
   boardStage: { alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  clearToast: { position: 'absolute', top: -14, alignSelf: 'center', paddingHorizontal: 13, paddingVertical: 7, minWidth: 62, borderRadius: 13, backgroundColor: COLORS.ink, alignItems: 'center', zIndex: 10, shadowColor: COLORS.shadow, shadowOpacity: 0.16, shadowOffset: { width: 0, height: 3 }, shadowRadius: 6, elevation: 4 },
+  clearToast: { position: 'absolute', top: -14, alignSelf: 'center', paddingHorizontal: 13, paddingVertical: 7, minWidth: 62, borderRadius: 13, backgroundColor: COLORS.coral, alignItems: 'center', zIndex: 10, shadowColor: COLORS.shadow, shadowOpacity: 0.16, shadowOffset: { width: 0, height: 3 }, shadowRadius: 6, elevation: 4 },
   clearToastText: { color: COLORS.white, fontFamily: TYPE.mono, fontWeight: '800', fontSize: 13 },
   chainToast: { marginTop: 2, color: '#FFCB70', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
   gameHint: { minHeight: 45, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 3 },
@@ -983,10 +1012,10 @@ const styles = StyleSheet.create({
   resultButtons: { width: '100%', gap: 9 },
   secondaryButton: { height: 52, borderRadius: 17, borderWidth: 1, borderColor: COLORS.line, backgroundColor: COLORS.paperBright, alignItems: 'center', justifyContent: 'center' },
   secondaryTitle: { color: COLORS.inkSoft, fontSize: 14, fontWeight: '800' },
-  statHero: { padding: 22, borderRadius: 22, backgroundColor: COLORS.ink, marginBottom: 14 },
-  statHeroLabel: { color: '#BFC9C1', fontSize: 9, fontWeight: '800', letterSpacing: 1.6 },
-  statHeroNumber: { color: COLORS.paperBright, fontFamily: TYPE.mono, fontSize: 39, fontWeight: '800', marginTop: 9 },
-  statHeroNote: { color: '#BFC9C1', fontSize: 12, marginTop: 3 },
+  statHero: { padding: 22, borderRadius: 22, backgroundColor: '#FFE7C4', marginBottom: 14 },
+  statHeroLabel: { color: '#A9794B', fontSize: 9, fontWeight: '800', letterSpacing: 1.6 },
+  statHeroNumber: { color: '#76533E', fontFamily: TYPE.mono, fontSize: 39, fontWeight: '800', marginTop: 9 },
+  statHeroNote: { color: '#9A755A', fontSize: 12, marginTop: 3 },
   statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statCard: { width: '48%', minHeight: 104, borderRadius: 17, padding: 13, backgroundColor: COLORS.paperBright, borderWidth: 1, borderColor: COLORS.line, flexGrow: 1 },
   statAccent: { width: 17, height: 4, borderRadius: 5, marginBottom: 10 },
