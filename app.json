@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "CASCADE",
+    "slug": "cascade",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#10121D"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.turzam.cascade"
+    },
+    "android": {
+      "package": "com.turzam.cascade",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-system-ui"
+    ]
+  }
+}
