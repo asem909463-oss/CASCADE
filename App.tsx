@@ -422,7 +422,7 @@ function HomeScreen({
   onHelp: () => void;
   onSettings: () => void;
 }) {
-  const artWidth = Math.min(206, width * 0.52);
+  const previewWidth = Math.min(width - 64, 246);
   const activeDailyStreak = getActiveDailyStreak(save);
   return (
     <ScrollView contentContainerStyle={styles.homeContent} showsVerticalScrollIndicator={false}>
@@ -441,14 +441,20 @@ function HomeScreen({
         <Text style={styles.wordmark}>CASCADE</Text>
         <Text style={styles.homeSubtitle}>{save.gamesPlayed === 0 ? 'Your first little cascade starts here.' : 'Clear a little space. Find your rhythm.'}</Text>
       </View>
-      <MiniMosaic width={artWidth} />
-      {save.gamesPlayed === 0 && (
-        <View style={styles.firstRunCard}>
-          <Text style={styles.firstRunKicker}>YOUR FIRST CASCADE</Text>
-          <Text style={styles.firstRunCopy}>One small clear can turn into something brilliant.</Text>
-          <Text style={styles.firstRunSpark}>✦</Text>
+      <View style={styles.previewSection}>
+        <View style={styles.previewHeading}>
+          <Text style={styles.previewKicker}>THE BOARD IS YOURS</Text>
+          <Text style={styles.previewCaption}>Find a group. Preview the points. Make your move.</Text>
         </View>
-      )}
+        <BoardGrid
+          board={HOME_PREVIEW_BOARD}
+          width={previewWidth}
+          onTap={() => undefined}
+          previewPositions={HOME_PREVIEW_GROUP}
+          disabled
+          reduceMotion
+        />
+      </View>
       <View style={styles.dailyStreakBanner}>
         <Text style={styles.dailyStreakSpark}>✦</Text>
         <View style={{ flex: 1 }}>
@@ -503,6 +509,17 @@ function HomeScreen({
     </ScrollView>
   );
 }
+
+const HOME_PREVIEW_BOARD = createBoard(mulberry32(0xca5cade));
+const HOME_PREVIEW_GROUP = (() => {
+  for (let row = 0; row < HOME_PREVIEW_BOARD.length; row += 1) {
+    for (let col = 0; col < HOME_PREVIEW_BOARD[row].length; col += 1) {
+      const group = findGroup(HOME_PREVIEW_BOARD, { row, col });
+      if (group.length >= 3) return group;
+    }
+  }
+  return [];
+})();
 
 function BrandMark() {
   return (
@@ -937,9 +954,13 @@ const styles = StyleSheet.create({
   homeHero: { alignItems: 'center', marginTop: 22 },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 9 },
   eyebrowDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.coral },
-  eyebrow: { fontSize: 9, letterSpacing: 2.3, fontWeight: '800', color: COLORS.inkSoft },
+  eyebrow: { fontSize: 10, letterSpacing: 2.0, fontWeight: '800', color: COLORS.inkSoft },
   wordmark: { fontFamily: TYPE.display, fontSize: 42, letterSpacing: 3.1, color: COLORS.ink, lineHeight: 49 },
   homeSubtitle: { marginTop: 8, textAlign: 'center', fontFamily: TYPE.display, fontStyle: 'italic', fontSize: 17, color: COLORS.inkSoft, lineHeight: 24 },
+  previewSection: { alignItems: 'center', marginTop: 17, marginBottom: 14 },
+  previewHeading: { width: '100%', alignItems: 'center', marginBottom: 10 },
+  previewKicker: { color: COLORS.coralDeep, fontSize: 10, fontWeight: '900', letterSpacing: 1.7 },
+  previewCaption: { color: COLORS.inkSoft, fontSize: 12, marginTop: 4, textAlign: 'center' },
   mosaicWrap: { alignSelf: 'center', marginTop: 12, marginBottom: 3, alignItems: 'center', justifyContent: 'center' },
   firstRunCard: { minHeight: 68, borderRadius: 19, paddingHorizontal: 15, paddingVertical: 11, backgroundColor: '#FFE4D9', borderWidth: 1, borderColor: '#FFC6B6', marginTop: 5, marginBottom: 7, position: 'relative', justifyContent: 'center' },
   firstRunKicker: { color: '#D96B58', fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
@@ -947,8 +968,8 @@ const styles = StyleSheet.create({
   firstRunSpark: { position: 'absolute', right: 15, top: 16, color: '#F4A83E', fontSize: 25 },
   dailyStreakBanner: { marginTop: 7, marginBottom: 8, minHeight: 58, borderRadius: 18, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF0D6', borderWidth: 1, borderColor: '#FFE0AA' },
   dailyStreakSpark: { color: '#F29B38', fontSize: 25, fontWeight: '900' },
-  dailyStreakTitle: { color: '#B87531', fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
-  dailyStreakCopy: { color: '#8F725B', fontSize: 10, marginTop: 3 },
+  dailyStreakTitle: { color: '#B87531', fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
+  dailyStreakCopy: { color: '#8F725B', fontSize: 11, marginTop: 3 },
   dailyStreakCount: { color: '#E99C3E', fontFamily: TYPE.mono, fontSize: 23, fontWeight: '900' },
   mosaicOrb: { position: 'absolute', backgroundColor: '#FFF0DF', opacity: 0.92 },
   mosaicGrid: { width: '67%', aspectRatio: 1, flexDirection: 'row', flexWrap: 'wrap', padding: 5, gap: 4, transform: [{ rotate: '-4deg' }], zIndex: 1 },
@@ -997,10 +1018,10 @@ const styles = StyleSheet.create({
   levelText: { color: COLORS.muted, fontFamily: TYPE.mono, fontSize: 10, fontWeight: '700' },
   scorePanel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 7 },
   scoreMain: { gap: 2 },
-  scoreLabel: { color: COLORS.muted, fontSize: 9, fontWeight: '800', letterSpacing: 1.5 },
+  scoreLabel: { color: COLORS.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
   scoreNumber: { color: COLORS.ink, fontFamily: TYPE.mono, fontSize: 34, fontWeight: '800', letterSpacing: -1.5 },
   scoreSide: { minWidth: 98, paddingLeft: 15, borderLeftWidth: 1, borderColor: COLORS.line, alignItems: 'flex-end', gap: 3 },
-  scoreSideLabel: { color: COLORS.muted, fontSize: 8, fontWeight: '800', letterSpacing: 1 },
+  scoreSideLabel: { color: COLORS.muted, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
   scoreSideValue: { color: COLORS.inkSoft, fontFamily: TYPE.mono, fontSize: 14, fontWeight: '700' },
   goalRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 7, marginBottom: 5 },
   goalText: { color: COLORS.inkSoft, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
@@ -1019,7 +1040,7 @@ const styles = StyleSheet.create({
   chainTag: { color: COLORS.coralDeep, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
   colorLegend: { height: 31, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 },
   legendDot: { width: 7, height: 7, borderRadius: 3.5, marginRight: 1 },
-  legendCopy: { color: '#A6A298', fontSize: 7.5, letterSpacing: 1.25, fontWeight: '800', marginLeft: 5 },
+  legendCopy: { color: '#A6A298', fontSize: 9, letterSpacing: 1.25, fontWeight: '800', marginLeft: 5 },
   simplePage: { flex: 1, paddingHorizontal: 25, alignItems: 'center', justifyContent: 'center' },
   simpleContent: { flexGrow: 1, paddingHorizontal: 22, paddingBottom: 35 },
   simpleHeader: { minHeight: 52, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
