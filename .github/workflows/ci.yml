@@ -22,6 +22,8 @@ jobs:
         run: |
           npm audit --json > /tmp/npm-audit.json || true
           node -e "const a=require('/tmp/npm-audit.json'); console.log('Vulnerability totals:', JSON.stringify(a.metadata?.vulnerabilities ?? {})); for (const [name, issue] of Object.entries(a.vulnerabilities ?? {})) console.log(name + ': ' + issue.severity + '; direct=' + issue.isDirect + '; fix=' + JSON.stringify(issue.fixAvailable));"
+      - name: Production dependency security gate
+        run: npm audit --omit=dev --audit-level=high
       - name: TypeScript
         run: npm run typecheck
       - name: Game engine tests
