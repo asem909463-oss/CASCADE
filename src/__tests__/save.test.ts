@@ -14,7 +14,7 @@ const validRun = {
   rulesetVersion: DAILY_RULESET_VERSION,
   mode: 'daily',
   board: Array.from({ length: 8 }, (_, row) =>
-    Array.from({ length: 8 }, (_, col) => TILE_COLORS[(row + col) % TILE_COLORS.length]),
+    Array.from({ length: 8 }, (_, col) => TILE_COLORS[(row + Math.floor(col / 2)) % TILE_COLORS.length]),
   ),
   score: 420,
   movesLeft: 11,
@@ -78,6 +78,22 @@ describe('local save schema', () => {
     const save = await loadSave();
     expect(save.currentRun).toEqual(validRun);
     expect(save.dailyScores).toEqual({ '2026-11-12': 1500, '2026-11-11': 900 });
+  });
+
+  it('drops a saved run that has no legal moves instead of restoring a frozen board', async () => {
+    const boardWithoutMoves = Array.from({ length: 8 }, (_, row) =>
+      Array.from({ length: 8 }, (_, col) => TILE_COLORS[(row + col) % TILE_COLORS.length]),
+    );
+    storage.getItem.mockResolvedValueOnce(JSON.stringify({
+      ...DEFAULT_SAVE,
+      highScore: 7654,
+      currentRun: { ...validRun, board: boardWithoutMoves },
+    }));
+
+    await expect(loadSave()).resolves.toMatchObject({
+      highScore: 7654,
+      currentRun: null,
+    });
   });
 
   it('drops malformed or unsupported resumable runs without losing safe scores', async () => {

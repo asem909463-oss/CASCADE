@@ -24,6 +24,8 @@ import {
   Board,
   createBoard,
   DAILY_RULESET_VERSION,
+  GROUP_BONUS_PER_TILE_OVER_FOUR,
+  POINTS_PER_TILE,
   formatDailyDate,
   hasValidMove,
   findGroup,
@@ -629,7 +631,7 @@ function GameScreen({
         <View style={styles.hintGlyph}><Text style={styles.hintGlyphText}>✦</Text></View>
         <Text style={[styles.hintCopy, compact && { fontSize: 12 }]}>
           {selectedPosition
-            ? `${findGroup(board, selectedPosition).length} stones · +${(findGroup(board, selectedPosition).length * 10 + Math.max(0, findGroup(board, selectedPosition).length - 4) * 5).toLocaleString()} · tap again to clear`
+            ? `${findGroup(board, selectedPosition).length} stones · +${(findGroup(board, selectedPosition).length * POINTS_PER_TILE + Math.max(0, findGroup(board, selectedPosition).length - 4) * GROUP_BONUS_PER_TILE_OVER_FOUR).toLocaleString()} · tap again to clear`
             : `Inspect a group, then commit your move${mode === 'daily' ? ' · 20 moves' : ''}`}
         </Text>
         {chain > 0 ? <Text style={styles.chainTag}>CHAIN ×{chain + 1}</Text> : <Text style={styles.hintRight}>{selectedPosition ? 'READY?' : 'CHOOSE CAREFULLY'}</Text>}
@@ -706,7 +708,7 @@ function StatsScreen({ save, onBack }: { save: SaveData; onBack: () => void }) {
           accent={COLORS.violet}
         />
       </View>
-      <StatCard label="DAILY SPARK STREAK" value={`${save.dailyStreak} days`} accent={COLORS.coral} />
+      <StatCard label="DAILY SPARK STREAK" value={`${getActiveDailyStreak(save)} days`} accent={COLORS.coral} />
       <Text style={styles.localNote}>Your progress lives on this device. No account needed.</Text>
     </SimpleShell>
   );

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Board, DAILY_RULESET_VERSION, TILE_COLORS } from '../game/engine';
+import { Board, DAILY_RULESET_VERSION, hasValidMove, TILE_COLORS } from '../game/engine';
 
 const STORAGE_KEY = '@cascade/save-v2';
 const LEGACY_STORAGE_KEY = '@cascade/save-v1';
@@ -100,7 +100,7 @@ function validRun(value: unknown): GameSnapshot | null {
   const run = value as Partial<GameSnapshot>;
   if (run.rulesetVersion !== DAILY_RULESET_VERSION) return null;
   if (run.mode !== 'endless' && run.mode !== 'daily') return null;
-  if (!isBoard(run.board) || !isDateKey(run.challengeDate)) return null;
+  if (!isBoard(run.board) || !hasValidMove(run.board) || !isDateKey(run.challengeDate)) return null;
   if (typeof run.rngState !== 'number' || !Number.isInteger(run.rngState) || run.rngState < 0 || run.rngState > 0xffffffff) return null;
   if (typeof run.score !== 'number' || !Number.isSafeInteger(run.score) || run.score < 0) return null;
   if (typeof run.tilesCleared !== 'number' || !Number.isSafeInteger(run.tilesCleared) || run.tilesCleared < 0) return null;
