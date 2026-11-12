@@ -40,7 +40,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const DAILY_MOVES = 20;
 const DAILY_GOAL = 10_000;
-type Screen = 'home' | 'game' | 'stats' | 'help' | 'settings' | 'result';
+type Screen = 'home' | 'game' | 'stats' | 'help' | 'settings' | 'privacy' | 'result';
 type Mode = 'endless' | 'daily';
 
 export default function App() {
@@ -345,8 +345,9 @@ export default function App() {
       {screen === 'stats' && <StatsScreen save={save} onBack={backToHome} />}
       {screen === 'help' && <HelpScreen onBack={backToHome} />}
       {screen === 'settings' && (
-        <SettingsScreen save={save} onBack={backToHome} onToggle={togglePreference} />
+        <SettingsScreen save={save} onBack={backToHome} onToggle={togglePreference} onPrivacy={() => setScreen('privacy')} />
       )}
+      {screen === 'privacy' && <PrivacyScreen onBack={() => setScreen('settings')} />}
         </>
       )}
       </SafeAreaView>
@@ -674,10 +675,12 @@ function SettingsScreen({
   save,
   onBack,
   onToggle,
+  onPrivacy,
 }: {
   save: SaveData;
   onBack: () => void;
   onToggle: (key: 'soundEnabled' | 'hapticsEnabled') => void;
+  onPrivacy: () => void;
 }) {
   return (
     <SimpleShell title="A few comforts" eyebrow="MAKE IT YOURS" onBack={onBack}>
@@ -685,11 +688,40 @@ function SettingsScreen({
         <PreferenceRow title="Sound effects" description="Soft little pops and chain chimes" enabled={save.soundEnabled} onPress={() => onToggle('soundEnabled')} />
         <PreferenceRow title="Haptic touch" description="A gentle tap when tiles clear" enabled={save.hapticsEnabled} onPress={() => onToggle('hapticsEnabled')} last />
       </View>
+      <View style={{ marginTop: 14 }}>
+        <SecondaryButton title="Read privacy policy" onPress={onPrivacy} />
+      </View>
       <View style={styles.settingsAbout}>
         <BrandMark />
         <Text style={styles.aboutCopy}>CASCADE is a tiny puzzle made for the quiet spaces in your day. Your score and settings stay right here on your device.</Text>
         <Text style={styles.versionText}>VERSION 1.0.0 · PLAY OFFLINE, ANYTIME</Text>
       </View>
+    </SimpleShell>
+  );
+}
+
+function PrivacyScreen({ onBack }: { onBack: () => void }) {
+  return (
+    <SimpleShell title="Privacy, plainly." eyebrow="YOUR DATA STAYS YOURS" onBack={onBack}>
+      <View style={styles.helpModes}>
+        <Text style={styles.helpModesTitle}>THE SHORT VERSION</Text>
+        <Text style={styles.helpModesBody}>CASCADE works offline. It does not ask you to create an account, and it does not send your scores or settings to us.</Text>
+      </View>
+      {[
+        ['Information we store', 'Your high score, game history, daily challenge results, unfinished run, and sound and haptic preferences are saved locally on your device so the game can remember your progress.'],
+        ['Information we collect', 'CASCADE does not include advertising, analytics, tracking, account registration, or a game server. We do not receive your gameplay data or use it to build a profile.'],
+        ['Device permissions', 'The game uses optional audio playback for its sound effects and the device haptic feedback feature when enabled. It does not need access to your contacts, photos, location, microphone, or camera.'],
+        ['Third-party services', 'The app is built with Expo and React Native. Apple, your device operating system, and app distribution services may process information under their own privacy terms when you download or use apps. CASCADE does not send gameplay data to those services.'],
+        ['Your choices and deletion', 'You can turn sound and haptics off in Settings. Your local game data can be removed by deleting CASCADE from your device; device backups may be governed by your operating-system settings.'],
+        ['Children and families', 'CASCADE has no account system, advertising, or social features. Parents can manage app access and device data through the controls provided by their device platform.'],
+        ['Policy updates and contact', 'If the app’s data practices change, this policy will be updated before or alongside the relevant app release. For privacy questions, contact the developer through the CASCADE GitHub repository: github.com/asem909463-oss/CASCADE.'],
+      ].map(([heading, body]) => (
+        <View key={heading} style={styles.helpModes}>
+          <Text style={styles.helpModesTitle}>{heading.toUpperCase()}</Text>
+          <Text style={styles.helpModesBody}>{body}</Text>
+        </View>
+      ))}
+      <Text style={styles.versionText}>LAST UPDATED · 12 NOVEMBER 2026</Text>
     </SimpleShell>
   );
 }
