@@ -439,11 +439,10 @@ function HomeScreen({
       </View>
       <View style={styles.menuActions}>
         {save.currentRun && (
-          <Pressable
+          <GameButton
             onPress={onResume}
-            accessibilityRole="button"
             accessibilityLabel={save.currentRun.mode === 'daily' ? 'Resume daily puzzle' : 'Resume endless run'}
-            style={({ pressed }) => [styles.resumeCard, pressed && styles.pressed]}
+            style={styles.resumeCard}
           >
             <View style={styles.resumeMark}><Text style={styles.resumeMarkText}>↻</Text></View>
             <View style={styles.resumeCopy}>
@@ -456,29 +455,29 @@ function HomeScreen({
               </Text>
             </View>
             <Text style={styles.chevron}>›</Text>
-          </Pressable>
+          </GameButton>
         )}
         <PrimaryButton title="Play endless" subtitle="Your next high score awaits" onPress={onPlay} />
-        <Pressable onPress={onDaily} style={({ pressed }) => [styles.dailyCard, pressed && styles.pressed]}>
+        <GameButton onPress={onDaily} style={styles.dailyCard}>
           <View style={styles.dailySeal}><Text style={styles.dailySealText}>D</Text></View>
           <View style={styles.dailyTextWrap}>
             <Text style={styles.dailyTitle}>Daily puzzle</Text>
             <Text style={styles.dailySubtitle}>{formatDailyDate()} · same board for everyone</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
-        </Pressable>
+        </GameButton>
       </View>
       <View style={styles.homeFooter}>
-        <Pressable onPress={onStats} style={styles.recordPill} accessibilityRole="button" accessibilityLabel={`Personal best ${save.highScore}`}>
+        <GameButton onPress={onStats} style={styles.recordPill} accessibilityLabel={`Personal best ${save.highScore}`}>
           <Text style={styles.recordLabel}>BEST</Text>
           <Text style={styles.recordValue}>{save.highScore.toLocaleString()}</Text>
-        </Pressable>
+        </GameButton>
         <View style={styles.footerDivider} />
         <View style={styles.footerStat}>
           <Text style={styles.recordLabel}>PUZZLES</Text>
           <Text style={styles.recordValue}>{save.gamesPlayed}</Text>
         </View>
-        <Text style={styles.statsLink} onPress={onStats}>Your journey ↗</Text>
+        <GameButton onPress={onStats} style={styles.statsLinkButton}><Text style={styles.statsLink}>Your journey ↗</Text></GameButton>
       </View>
       <Text style={styles.offlineNote}>MADE FOR THE LITTLE PAUSES</Text>
     </ScrollView>
@@ -782,7 +781,7 @@ function PreferenceRow({ title, description, enabled, onPress, last = false }: {
         <Text style={styles.preferenceTitle}>{title}</Text>
         <Text style={styles.preferenceDescription}>{description}</Text>
       </View>
-      <Pressable
+      <GameButton
         accessibilityRole="switch"
         accessibilityState={{ checked: enabled }}
         accessibilityLabel={title}
@@ -790,7 +789,7 @@ function PreferenceRow({ title, description, enabled, onPress, last = false }: {
         style={[styles.switchTrack, enabled && styles.switchOn]}
       >
         <View style={[styles.switchThumb, enabled && styles.switchThumbOn]} />
-      </Pressable>
+      </GameButton>
     </View>
   );
 }
@@ -811,29 +810,66 @@ function SimpleShell({ title, eyebrow, onBack, children }: { title: string; eyeb
 
 function IconButton({ label, icon, onPress }: { label: string; icon: string; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+    <GameButton accessibilityLabel={label} onPress={onPress} style={styles.iconButton}>
       <Text style={[styles.iconButtonText, icon === '‹' && styles.backGlyph]}>{icon}</Text>
-    </Pressable>
+    </GameButton>
   );
 }
 
 function PrimaryButton({ title, subtitle, onPress }: { title: string; subtitle?: string; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.primaryButton, pressed && styles.primaryPressed]}>
+    <GameButton onPress={onPress} style={styles.primaryButton}>
       <View style={styles.primaryTextWrap}>
         <Text style={styles.primaryTitle}>{title}</Text>
         {!!subtitle && <Text style={styles.primarySubtitle}>{subtitle}</Text>}
       </View>
       <View style={styles.primaryArrow}><Text style={styles.primaryArrowText}>↗</Text></View>
-    </Pressable>
+    </GameButton>
   );
 }
 
 function SecondaryButton({ title, onPress }: { title: string; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
+    <GameButton onPress={onPress} style={styles.secondaryButton}>
       <Text style={styles.secondaryTitle}>{title}</Text>
-    </Pressable>
+    </GameButton>
+  );
+}
+
+function GameButton({
+  children,
+  onPress,
+  style,
+  accessibilityLabel,
+  accessibilityRole = 'button',
+  accessibilityState,
+  disabled = false,
+}: {
+  children: React.ReactNode;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
+  accessibilityRole?: 'button' | 'switch';
+  accessibilityState?: { checked?: boolean; disabled?: boolean; selected?: boolean; expanded?: boolean; busy?: boolean; }>;
+  disabled?: boolean;
+}) {
+  const playFeedback = React.useContext(ButtonFeedbackContext);
+  const scale = useRef(new Animated.Value(1)).current;
+  const pressIn = () => Animated.spring(scale, { toValue: 0.965, speed: 28, bounciness: 5, useNativeDriver: true }).start();
+  const pressOut = () => Animated.spring(scale, { toValue: 1, speed: 24, bounciness: 5, useNativeDriver: true }).start();
+  return (
+    <AnimatedPressable
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
+      disabled={disabled}
+      onPressIn={pressIn}
+      onPressOut={pressOut}
+      onPress={() => { playFeedback(); onPress(); }}
+      style={[style, { transform: [{ scale }] }]}
+    >
+      {children}
+    </AnimatedPressable>
   );
 }
 
