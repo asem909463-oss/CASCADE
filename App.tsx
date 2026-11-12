@@ -169,18 +169,22 @@ export default function App() {
     inputLockedRef.current = false;
     setInputLocked(false);
     finishedRef.current = false;
-    const snapshot: GameSnapshot = {
-      rulesetVersion: DAILY_RULESET_VERSION,
-      mode: nextMode,
-      board: nextBoard,
-      score: 0,
-      movesLeft: nextMode === 'daily' ? DAILY_MOVES : null,
-      tilesCleared: 0,
-      rngState: random.getState(),
-      challengeDate,
-      bestAtStart: save.highScore,
-    };
-    setSave((current) => ({ ...current, currentRun: snapshot }));
+    if (nextMode !== 'campaign') {
+      const snapshot: GameSnapshot = {
+        rulesetVersion: DAILY_RULESET_VERSION,
+        mode: nextMode,
+        board: nextBoard,
+        score: 0,
+        movesLeft: nextMode === 'daily' ? DAILY_MOVES : null,
+        tilesCleared: 0,
+        rngState: random.getState(),
+        challengeDate,
+        bestAtStart: save.highScore,
+      };
+      setSave((current) => ({ ...current, currentRun: snapshot }));
+    } else {
+      setSave((current) => ({ ...current, currentRun: null }));
+    }
     setScreen('game');
   }, [campaignLevel, save.highScore]);
 
@@ -320,21 +324,20 @@ export default function App() {
       finishGame(nextScore, tilesClearedRef.current);
       return;
     }
-    const snapshot: GameSnapshot = {
-      rulesetVersion: DAILY_RULESET_VERSION,
-      mode,
-      board: result.board,
-      score: nextScore,
-      movesLeft: nextMovesLeft,
-      tilesCleared: tilesClearedRef.current,
-      rngState: randomRef.current.getState(),
-      challengeDate: gameDate,
-      bestAtStart: bestAtStartRef.current,
-    };
-    setSave((current) => ({
-      ...current,
-      currentRun: snapshot,
-    }));
+    if (mode !== 'campaign') {
+      const snapshot: GameSnapshot = {
+        rulesetVersion: DAILY_RULESET_VERSION,
+        mode,
+        board: result.board,
+        score: nextScore,
+        movesLeft: nextMovesLeft,
+        tilesCleared: tilesClearedRef.current,
+        rngState: randomRef.current.getState(),
+        challengeDate: gameDate,
+        bestAtStart: bestAtStartRef.current,
+      };
+      setSave((current) => ({ ...current, currentRun: snapshot }));
+    }
   }, [board, campaignLevel, clearFade, feedback, finishGame, gameDate, mode, movesLeft, reduceMotion, score, selectedPosition]);
 
   const playAgain = () => startGame(mode, mode === 'campaign' && campaignWon ? Math.min(500, campaignLevel + 1) : campaignLevel);
@@ -756,12 +759,12 @@ function ResultScreen({
         : mode === 'campaign' ? `PUZZLE JOURNEY · LEVEL ${campaignLevel}` : 'A LOVELY LITTLE RUN'}</Text>
       <Text style={styles.resultTitle}>{mode === 'campaign' ? (campaignWon ? 'Puzzle solved!' : 'Not quite yet.') : isNewBest ? 'New personal best.' : 'Nicely done.'}</Text>
       <Text style={styles.resultScore}>{score.toLocaleString()}</Text>
-      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${saveCampaignStarsPlaceholder}` : 'Reach the target score to unlock the next puzzle') : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
+      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${starsForCampaignScore(score, getCampaignLevel(campaignLevel).targetScore)} stars earned · new puzzle unlocked` : 'Reach the target score to unlock the next puzzle') : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
       {mode === 'daily' && <Text style={styles.dailyRecord}>CHALLENGE BEST · {dailyBest.toLocaleString()}</Text>}
       <View style={styles.resultDecor}><MiniMosaic width={176} /></View>
       <View style={styles.resultButtons}>
         <PrimaryButton
-          title={mode === 'campaign' ? (campaignWon ? (campaignLevel >= 500 ? 'Campaign complete' : 'Next puzzle') : 'Try this puzzle again') : mode === 'daily' ? (isCurrentDaily ? 'Play today again' : 'Start today’s challenge') : 'Play another round'}
+          title={mode === 'campaign' ? (campaignWon ? (campaignLevel >= 500 ? 'Replay final puzzle' : 'Next puzzle') : 'Try this puzzle again') : mode === 'daily' ? (isCurrentDaily ? 'Play today again' : 'Start today’s challenge') : 'Play another round'}
           onPress={onAgain}
         />
         <SecondaryButton title="Back to home" onPress={onHome} />
