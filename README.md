@@ -29,8 +29,6 @@ Scan the QR code with Expo Go to run on a device.
 
 ## Validate (also runs in GitHub Actions on pushes and pull requests)
 
-
-
 ```bash
 npm run typecheck
 npm test
