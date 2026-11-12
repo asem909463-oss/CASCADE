@@ -1,52 +1,34 @@
-# CASCADE — Team Ownership & Git Workflow
+# CASCADE — Development Workflow
 
-## Team
+## Ownership
+- Product decisions, architecture, implementation, QA, backend integration and release coordination: ChatGPT.
+- Product approval and account/device access: project owner.
+- No external AI agents are assigned implementation or review work.
 
-| Owner | Responsibility | Must not own |
-|---|---|---|
-| ChatGPT | Product owner, project coordination, architecture decisions, review and release gates | Pretending to run agents outside available connections |
-| Manus | Expo app, game engine, UI, animations, sound, haptics, local persistence and client tests | Supabase schema/security ownership |
-| Perplexity | Supabase architecture, SQL migrations, RLS, Edge Functions, backend tests and API contracts | Game UI and gameplay implementation |
-| Claude | Independent QA plans, code review, reproducible bug reports, performance and release audits | Competing game implementation or marketing |
-| Marketing AI (TBD) | Marketing and launch creative, once appointed | Product or engineering decisions |
-
-## Repository rules
-
+## Repository
 - Repository: `asem909463-oss/CASCADE`.
-- `main` is the integration branch and should remain buildable.
-- Each agent works on a clearly named branch.
-- Suggested branches: `manus/game-client`, `perplexity/backend`, `claude/qa`.
-- Documentation-only coordination work uses `docs/*`.
-- Do not force-push, rewrite shared history, or overwrite another agent's files.
-- Do not push unfinished work directly to `main`.
-- Submit a pull request for integration; include a summary, test evidence, screenshots where useful, and known limitations.
-- Before editing, inspect the latest `main` and check for overlapping work.
+- `main` is the integration branch and must remain buildable.
+- Active implementation branch: `build/playable-core`.
 - Keep commits focused and descriptive.
+- Do not force-push or rewrite shared history.
+- Work in feature branches and use pull requests for integration.
+- Never report generated code as complete until it has been built and tested.
 
-## File ownership boundaries
+## Engineering gates
+1. Inspect the current repository state before editing.
+2. Implement a complete, usable milestone rather than adding placeholder screens.
+3. Add automated tests for deterministic game logic.
+4. Run typecheck, unit tests and platform bundle validation.
+5. Review security, privacy, performance and offline behavior before release.
+6. Merge only after validation results are available and reviewed.
+7. Re-check the integrated `main` branch after merging.
 
-- Manus: app source, Expo configuration, assets and client tests.
-- Perplexity: `supabase/**`, backend documentation and backend tests.
-- Claude: QA documentation and isolated test tooling only, coordinated with the implementation owner.
-- Shared contracts: agree changes with both client and backend owners before merging.
+## Reporting
+Every milestone update must state:
+- What now works.
+- Exact branch and commit.
+- Tests actually run and their real results.
+- Evidence such as CI output or device screenshots.
+- Remaining limitations and next implementation step.
 
-## Integration protocol
-
-1. Owner reports the branch, commit SHA, changed files, tests run and blockers.
-2. Claude reviews the relevant implementation and reports reproducible findings.
-3. ChatGPT checks product scope, ownership boundaries, security implications and test evidence.
-4. The responsible owner fixes requested changes.
-5. Merge only after review and required checks pass.
-6. Re-check the integrated `main`; do not assume a green branch means the combined app works.
-
-## Reporting format
-
-Every milestone update must include:
-- **Completed:** specific working outcomes.
-- **Branch / commit:** exact Git reference.
-- **Tests:** commands or test names and actual results.
-- **Evidence:** screenshots, logs or PR link when relevant.
-- **Blockers:** access, credentials, dependencies or decisions needed.
-- **Next:** the next concrete deliverable.
-
-Never report a task as complete merely because code was generated. Never invent test results.
+Never invent test results, device testing, builds or release status.
