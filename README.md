@@ -27,7 +27,9 @@ npx expo start
 
 Scan the QR code with Expo Go to run on a device.
 
-## Validate
+## Validate (also runs in GitHub Actions on pushes and pull requests)
+
+
 
 ```bash
 npm run typecheck
