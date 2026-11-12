@@ -40,24 +40,24 @@ describe('CASCADE board engine', () => {
     expect(hasLegalMove(live)).toBe(true);
   });
 
-  it('preserves every surviving tile and its vertical order', () => {
+  it('preserves surviving vertical order after gravity', () => {
     const fixture = board([
-      'AABCDEFGH',
-      'AABCDEFGH',
-      'AABCDEFGH',
-      'AABCDEFGH',
-      'AABCDEFGH',
-      'AABCDEFGH',
-      'AABCDEFGH',
-      'AABCDEFGH',
+      'ABBBBBBB',
+      'ACCCCCCC',
+      'DEFGHABC',
+      'EFGHABCD',
+      'FGHABCDE',
+      'GHABCDEF',
+      'HABCDEFG',
+      'BCDEFGHA',
     ]);
     const original = fixture.map(row => [...row]);
     const group = findGroup(fixture, 0, 0);
+    expect(group).toHaveLength(2);
     const next = removeGroup(fixture, group, createRandom(7));
-    for (let col = 0; col < 8; col += 1) {
-      const expected = original.map(row => row[col]).filter((_, row) => !group.some(cell => cell.row === row && cell.col === col));
-      const actual = next.map(row => row[col]).filter((_, row) => row >= 8 - expected.length);
-      expect(actual).toEqual(expected);
+    expect(next.slice(2).map(row => row[0])).toEqual(original.slice(2).map(row => row[0]));
+    for (let col = 1; col < 8; col += 1) {
+      expect(next.map(row => row[col])).toEqual(original.map(row => row[col]));
     }
   });
 
