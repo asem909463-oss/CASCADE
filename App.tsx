@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   Animated,
   AccessibilityInfo,
@@ -38,6 +39,9 @@ import { COLORS, TYPE } from './src/theme/tokens';
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const ButtonFeedbackContext = React.createContext<() => void>(() => undefined);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const DAILY_MOVES = 20;
 const DAILY_GOAL = 10_000;
@@ -104,13 +108,20 @@ export default function App() {
     if (hydrated) void saveData(save);
   }, [hydrated, save]);
 
+  const buttonFeedback = useCallback(() => {
+    if (save.hapticsEnabled) void Haptics.selectionAsync();
+    if (save.soundEnabled) {
+      void popSound.seekTo(0).then(() => popSound.play()).catch(() => undefined);
+    }
+  }, [popSound, save.hapticsEnabled, save.soundEnabled]);
+
   const feedback = useCallback((kind: 'clear' | 'chain' | 'invalid' | 'inspect') => {
     if (save.hapticsEnabled) {
       if (kind === 'chain') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       else if (kind === 'clear') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       else void Haptics.selectionAsync();
     }
-    if (save.soundEnabled && (kind === 'clear' || kind === 'chain')) {
+    if (save.soundEnabled && (kind === 'clear' || kind === 'chain' || kind === 'inspect')) {
       const player = kind === 'chain' ? chainSound : popSound;
       void player.seekTo(0).then(() => player.play()).catch(() => undefined);
     }
@@ -200,6 +211,12 @@ export default function App() {
       ...(mode === 'daily'
         ? {
             dailyDate: gameDate,
+            dailyStreak: current.lastDailyCompleted === gameDate
+              ? current.dailyStreak
+              : current.lastDailyCompleted === new Date(new Date(`${gameDate}T00:00:00Z`).getTime() - 86400000).toISOString().slice(0, 10)
+                ? current.dailyStreak + 1
+                : 1,
+            lastDailyCompleted: gameDate,
             dailyBest: Math.max(current.dailyBest, finalScore),
             dailyScores: {
               ...current.dailyScores,
@@ -307,6 +324,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <ButtonFeedbackContext.Provider value={buttonFeedback}>
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar style="dark" />
       {!hydrated ? (
@@ -368,6 +386,7 @@ export default function App() {
         </>
       )}
       </SafeAreaView>
+      </ButtonFeedbackContext.Provider>
     </SafeAreaProvider>
   );
 }
@@ -407,9 +426,17 @@ function HomeScreen({
           <Text style={styles.eyebrow}>A MOMENT OF FLOW</Text>
         </View>
         <Text style={styles.wordmark}>CASCADE</Text>
-        <Text style={styles.homeSubtitle}>Clear a little space.{"\n"}Find your rhythm.</Text>
+        <Text style={styles.homeSubtitle}>{save.gamesPlayed === 0 ? 'Your first little cascade starts here.' : 'Clear a little space. Find your rhythm.'}</Text>
       </View>
       <MiniMosaic width={artWidth} />
+      <View style={styles.dailyStreakBanner}>
+        <Text style={styles.dailyStreakSpark}>✦</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.dailyStreakTitle}>THE DAILY SPARK</Text>
+          <Text style={styles.dailyStreakCopy}>{save.dailyStreak > 0 ? `${save.dailyStreak} day${save.dailyStreak === 1 ? '' : 's'} in a row — keep your rhythm` : 'A fresh little challenge, every day'}</Text>
+        </View>
+        <Text style={styles.dailyStreakCount}>{save.dailyStreak}</Text>
+      </View>
       <View style={styles.menuActions}>
         {save.currentRun && (
           <Pressable
@@ -648,6 +675,7 @@ function StatsScreen({ save, onBack }: { save: SaveData; onBack: () => void }) {
           accent={COLORS.violet}
         />
       </View>
+      <StatCard label="DAILY SPARK STREAK" value={`${save.dailyStreak} days`} accent={COLORS.coral} />
       <Text style={styles.localNote}>Your progress lives on this device. No account needed.</Text>
     </SimpleShell>
   );
