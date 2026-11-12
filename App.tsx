@@ -115,7 +115,7 @@ export default function App() {
           <Text style={styles.instruction}>Tap matching neighbours to make them disappear.</Text>
         </View>
 
-        <View style={styles.boardFrame}>
+        <View style={[styles.boardFrame, { width: boardWidth }]}>
           <View style={styles.board}>
             {board.map((line, row) => (
               <View key={row} style={styles.boardRow}>
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   instructionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 15 },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#7FE0C0' },
   instruction: { color: '#B1B4C3', fontSize: 11, letterSpacing: 0.2 },
-  boardFrame: { width: boardWidth, aspectRatio: 1, padding: 8, borderRadius: 22, backgroundColor: '#1A1D2B', borderWidth: 1, borderColor: '#303449' },
+  boardFrame: { aspectRatio: 1, padding: 8, borderRadius: 22, backgroundColor: '#1A1D2B', borderWidth: 1, borderColor: '#303449' },
   board: { flex: 1, gap: GAP },
   boardRow: { flex: 1, flexDirection: 'row', gap: GAP },
   tile: { flex: 1, borderRadius: 7, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' },
