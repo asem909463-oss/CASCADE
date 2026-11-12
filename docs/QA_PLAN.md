@@ -5,9 +5,10 @@
 
 ## 1. Campaign progression tests
 
-- Every campaign level has a stable seed, score target and move limit.
-- Every seeded campaign board has at least one legal move.
-- A level unlocks the next level only when its score goal is reached.
+- Every campaign level has a stable seed, objective, move limit and score reference.
+- Every seeded campaign board has at least one legal move; automated coverage checks all 500 levels.
+- A level unlocks the next level only when its own score, tile-clear or chain objective is reached.
+- Every completed objective earns at least one star; higher score thresholds can earn two or three.
 - Replays preserve the highest star rating and best score.
 - Locked levels cannot be launched.
 - Chapter boundaries and the final level are correct.
@@ -63,7 +64,7 @@ The score curve and chain timing must be approved before writing expected numeri
 ## 3. Persistence and offline tests
 
 - Best score survives app restart.
-- An interrupted run restores only if resume is an approved feature.
+- An interrupted endless or daily run restores from a validated local snapshot; campaign levels currently restart if interrupted.
 - Invalid or corrupted save data is handled safely without crashing.
 - Schema/version migrations preserve compatible data.
 - A failed cloud request does not erase a valid local save.
@@ -77,7 +78,7 @@ The score curve and chain timing must be approved before writing expected numeri
 - Board remains usable across supported iPhone screen sizes and safe areas.
 - Android application ID is explicit and matches the intended release identity.
 - Reduced-motion and sound/haptics settings are respected, including tile press feedback.
-- Backgrounding the app flushes the latest recoverable run to local storage.
+- Backgrounding the app flushes the latest recoverable endless or daily run to local storage.
 - Text, colour and selection states remain legible.
 - App background/foreground transitions do not corrupt a move or save.
 
