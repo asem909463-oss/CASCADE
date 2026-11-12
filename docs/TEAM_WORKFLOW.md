@@ -8,7 +8,8 @@ ChatGPT owns the product direction, implementation, code review, testing coordin
 
 - Repository: `asem909463-oss/CASCADE`.
 - `main` is the release integration branch and must remain buildable.
-- Work on a named feature branch and open a pull request into `main`.
+- `main` is the canonical integration branch; every completed change must land there.
+- Small, reviewed changes may be committed directly to `main`; larger isolated work should use a named feature branch and pull request.
 - Never force-push or rewrite shared history.
 - Do not describe code generation as completion; report actual test and build evidence.
 - Keep the product offline-first unless a future feature is explicitly approved.

@@ -24,7 +24,8 @@
 ## 4. Quality and delivery
 - [x] Clean, maintainable architecture.
 - [x] Write automated gameplay tests.
-- [x] Validate iOS JavaScript export and generated native project; physical-device/Xcode build remains pending.
+- [x] Validate iOS and Android JavaScript bundle exports in CI.
+- [ ] Generate native iOS/Android projects, complete native builds, and test on physical devices.
 - [x] Report commits, tests, completed work and blockers. Do not claim anything works without testing it.
 
 ## Production gates still open
