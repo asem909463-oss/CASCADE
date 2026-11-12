@@ -9,11 +9,13 @@ type Props = {
   board: Board;
   width: number;
   onTap: (position: Position) => void;
+  previewPositions?: Position[];
   disabled?: boolean;
   reduceMotion?: boolean;
 };
 
-export function BoardGrid({ board, width, onTap, disabled = false, reduceMotion = false }: Props) {
+export function BoardGrid({ board, width, onTap, previewPositions = [], disabled = false, reduceMotion = false }: Props) {
+  const previewKeys = new Set(previewPositions.map(({ row, col }) => `${row},${col}`));
   const tileWidth = (width - 8 - GAP * 16) / 8;
   return (
     <View
@@ -25,6 +27,7 @@ export function BoardGrid({ board, width, onTap, disabled = false, reduceMotion 
             <BoardTile
               key={`${rowIndex}-${colIndex}`}
               color={color}
+              preview={previewKeys.has(`${rowIndex},${colIndex}`)}
               size={tileWidth}
               onPress={() => onTap({ row: rowIndex, col: colIndex })}
               disabled={disabled}
@@ -40,6 +43,7 @@ export function BoardGrid({ board, width, onTap, disabled = false, reduceMotion 
 
 function BoardTile({
   color,
+  preview,
   size,
   onPress,
   disabled,
@@ -47,6 +51,7 @@ function BoardTile({
   label,
 }: {
   color: TileColor | null;
+  preview: boolean;
   size: number;
   onPress: () => void;
   disabled: boolean;
@@ -80,11 +85,12 @@ function BoardTile({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${label}, ${color} tile`}
-        accessibilityHint="Clears the connected group if it contains at least two tiles"
+        accessibilityHint={preview ? 'Selected group. Tap any tile in this group again to clear it.' : 'Tap to inspect this connected group before clearing it.'}
         disabled={disabled}
         onPress={onPress}
         style={({ pressed }) => [
           styles.tile,
+          preview && styles.preview,
           {
             width: size,
             height: size,
@@ -130,6 +136,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  preview: {
+    borderWidth: 2.5,
+    borderColor: '#FFF9E8',
+    shadowColor: '#172324',
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 5,
   },
   glint: {
     position: 'absolute',
