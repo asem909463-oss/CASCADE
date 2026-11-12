@@ -14,7 +14,7 @@
       "bundleIdentifier": "com.cascade.game"
     },
     "android": {
-      "package": "com.turzam.cascade",
+      "package": "com.cascade.game",
       "edgeToEdgeEnabled": true
     },
     "plugins": [
