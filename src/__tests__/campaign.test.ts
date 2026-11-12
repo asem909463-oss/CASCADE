@@ -17,6 +17,16 @@ describe('CASCADE campaign', () => {
     }
   });
 
+  it('guarantees enough target-colour tiles at the start of every colour puzzle', () => {
+    for (let level = 1; level <= CAMPAIGN_LEVEL_COUNT; level += 1) {
+      const definition = getCampaignLevel(level);
+      if (definition.objective !== 'color' || !definition.objectiveColor) continue;
+      const board = createCampaignBoard(level);
+      expect(board.flat().filter((color) => color === definition.objectiveColor).length)
+        .toBeGreaterThanOrEqual(definition.objectiveTarget);
+    }
+  });
+
   it('increases score goals and maintains bounded move limits', () => {
     expect(getCampaignLevel(500).targetScore).toBeGreaterThan(getCampaignLevel(1).targetScore);
     expect(getCampaignLevel(1).moveLimit).toBe(18);
