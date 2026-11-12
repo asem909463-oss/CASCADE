@@ -27,12 +27,17 @@ describe('CASCADE campaign', () => {
     const scoreLevel = getCampaignLevel(1);
     const tileLevel = getCampaignLevel(3);
     const chainLevel = getCampaignLevel(5);
+    const colorLevel = getCampaignLevel(7);
     expect(scoreLevel.objective).toBe('score');
     expect(tileLevel.objective).toBe('tiles');
     expect(chainLevel.objective).toBe('chain');
+    expect(colorLevel.objective).toBe('color');
+    expect(colorLevel.objectiveColor).toBeTruthy();
     expect(isCampaignObjectiveComplete(scoreLevel, scoreLevel.targetScore, 0, 0)).toBe(true);
     expect(isCampaignObjectiveComplete(tileLevel, 0, tileLevel.objectiveTarget, 0)).toBe(true);
     expect(isCampaignObjectiveComplete(chainLevel, 0, 0, chainLevel.objectiveTarget)).toBe(true);
+    expect(isCampaignObjectiveComplete(colorLevel, 0, 0, 0, colorLevel.objectiveTarget)).toBe(true);
+    expect(isCampaignObjectiveComplete(colorLevel, 0, 0, 0, colorLevel.objectiveTarget - 1)).toBe(false);
   });
 
   it('awards at least one star for every completed objective, including non-score objectives', () => {

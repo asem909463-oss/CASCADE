@@ -7,7 +7,8 @@
 
 - Every campaign level has a stable seed, objective, move limit and score reference.
 - Every seeded campaign board has at least one legal move; automated coverage checks all 500 levels.
-- A level unlocks the next level only when its own score, tile-clear or chain objective is reached.
+- A level unlocks the next level only when its own score, tile-clear, chain or colour-specific objective is reached.
+- Colour objectives count only tiles of the required colour, including chain clears.
 - Every completed objective earns at least one star; higher score thresholds can earn two or three.
 - Replays preserve the highest star rating and best score.
 - Locked levels cannot be launched.

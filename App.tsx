@@ -81,6 +81,7 @@ export default function App() {
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tilesClearedRef = useRef(0);
+  const targetColorClearedRef = useRef(0);
   const bestAtStartRef = useRef(0);
   const clearFade = useRef(new Animated.Value(0)).current;
 
@@ -159,6 +160,7 @@ export default function App() {
     setBoard(nextBoard);
     setScore(0);
     tilesClearedRef.current = 0;
+    targetColorClearedRef.current = 0;
     bestAtStartRef.current = save.highScore;
     setGameDate(challengeDate);
     setChain(0);
@@ -289,6 +291,10 @@ export default function App() {
     }
     setBoard(result.board);
     tilesClearedRef.current += result.removed;
+    const activeLevel = mode === 'campaign' ? getCampaignLevel(campaignLevel) : null;
+    if (activeLevel?.objective === 'color' && activeLevel.objectiveColor) {
+      targetColorClearedRef.current += result.removedByColor[activeLevel.objectiveColor] ?? 0;
+    }
     const nextScore = score + result.totalPoints;
     setScore(nextScore);
     setChain(result.chainCount);
@@ -315,7 +321,7 @@ export default function App() {
       const left = movesLeft - 1;
       nextMovesLeft = left;
       setMovesLeft(left);
-      const levelGoalReached = mode === 'campaign' && isCampaignObjectiveComplete(getCampaignLevel(campaignLevel), nextScore, tilesClearedRef.current, result.chainCount);
+      const levelGoalReached = mode === 'campaign' && isCampaignObjectiveComplete(getCampaignLevel(campaignLevel), nextScore, tilesClearedRef.current, result.chainCount, targetColorClearedRef.current);
       if (levelGoalReached || left <= 0 || result.gameOver) {
         finishGame(nextScore, tilesClearedRef.current, levelGoalReached);
         return;
@@ -391,7 +397,7 @@ export default function App() {
           score={score}
           best={save.highScore}
           campaignObjective={mode === 'campaign' ? campaignObjectiveLabel(getCampaignLevel(campaignLevel)) : ''}
-          campaignProgress={mode !== 'campaign' ? 0 : getCampaignLevel(campaignLevel).objective === 'score' ? score / getCampaignLevel(campaignLevel).targetScore : getCampaignLevel(campaignLevel).objective === 'tiles' ? tilesClearedRef.current / getCampaignLevel(campaignLevel).objectiveTarget : chain / getCampaignLevel(campaignLevel).objectiveTarget}
+          campaignProgress={mode !== 'campaign' ? 0 : getCampaignLevel(campaignLevel).objective === 'score' ? score / getCampaignLevel(campaignLevel).targetScore : getCampaignLevel(campaignLevel).objective === 'tiles' ? tilesClearedRef.current / getCampaignLevel(campaignLevel).objectiveTarget : getCampaignLevel(campaignLevel).objective === 'color' ? targetColorClearedRef.current / getCampaignLevel(campaignLevel).objectiveTarget : chain / getCampaignLevel(campaignLevel).objectiveTarget}
           chain={chain}
           movesLeft={movesLeft}
           lastClear={lastClear}

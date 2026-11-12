@@ -16,8 +16,9 @@ export type CampaignLevel = {
   targetScore: number;
   moveLimit: number;
   seed: number;
-  objective: 'score' | 'tiles' | 'chain';
+  objective: 'score' | 'tiles' | 'chain' | 'color';
   objectiveTarget: number;
+  objectiveColor: (typeof TILE_COLORS)[number] | null;
 };
 
 function levelSeed(level: number): number {
@@ -41,8 +42,9 @@ export function getCampaignLevel(level: number): CampaignLevel {
     targetScore: 350 + safeLevel * 10,
     moveLimit: Math.max(10, 18 - Math.floor((safeLevel - 1) / 125)),
     seed: levelSeed(safeLevel),
-    objective: safeLevel % 5 === 0 ? 'chain' : safeLevel % 3 === 0 ? 'tiles' : 'score',
-    objectiveTarget: safeLevel % 5 === 0 ? (safeLevel >= 250 ? 2 : 1) : safeLevel % 3 === 0 ? 18 + Math.floor(safeLevel / 12) : 0,
+    objective: safeLevel % 7 === 0 ? 'color' : safeLevel % 5 === 0 ? 'chain' : safeLevel % 3 === 0 ? 'tiles' : 'score',
+    objectiveTarget: safeLevel % 7 === 0 ? 10 + Math.floor(safeLevel / 100) : safeLevel % 5 === 0 ? (safeLevel >= 250 ? 2 : 1) : safeLevel % 3 === 0 ? 18 + Math.floor(safeLevel / 12) : 0,
+    objectiveColor: safeLevel % 7 === 0 ? TILE_COLORS[Math.floor(safeLevel / 7) % TILE_COLORS.length] : null,
   };
 }
 
@@ -65,15 +67,18 @@ export function isCampaignObjectiveComplete(
   score: number,
   tilesCleared: number,
   lastChainCount: number,
+  targetColorTilesCleared = 0,
 ): boolean {
   if (level.objective === 'score') return score >= level.targetScore;
   if (level.objective === 'tiles') return tilesCleared >= level.objectiveTarget;
+  if (level.objective === 'color') return targetColorTilesCleared >= level.objectiveTarget;
   return lastChainCount >= level.objectiveTarget;
 }
 
 export function campaignObjectiveLabel(level: CampaignLevel): string {
   if (level.objective === 'score') return `Reach ${level.targetScore.toLocaleString()} points`;
   if (level.objective === 'tiles') return `Clear ${level.objectiveTarget} tiles`;
+  if (level.objective === 'color') return `Clear ${level.objectiveTarget} ${level.objectiveColor} tiles`;
   return `Trigger a chain of ${level.objectiveTarget} wave${level.objectiveTarget === 1 ? '' : 's'}`;
 }
 

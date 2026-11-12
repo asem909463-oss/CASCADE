@@ -21,6 +21,7 @@ export type MoveResult = {
   chainPoints: number;
   totalPoints: number;
   gameOver: boolean;
+  removedByColor: Partial<Record<TileColor, number>>;
 };
 
 const inBounds = (row: number, col: number) =>
@@ -157,6 +158,11 @@ export function playMove(
   const basePoints = group.length * POINTS_PER_TILE +
     Math.max(0, group.length - 4) * GROUP_BONUS_PER_TILE_OVER_FOUR;
   let removed = group.length;
+  const removedByColor: Partial<Record<TileColor, number>> = {};
+  for (const { row, col } of group) {
+    const color = board[row][col] as TileColor;
+    removedByColor[color] = (removedByColor[color] ?? 0) + 1;
+  }
   let chainCount = 0;
   let chainPoints = 0;
 
@@ -171,6 +177,10 @@ export function playMove(
     if (!cascadingGroups.length) break;
     const cascadeCells = cascadingGroups.flat();
     const cascadeSize = cascadeCells.length;
+    for (const { row, col } of cascadeCells) {
+      const color = current.board[row][col] as TileColor;
+      removedByColor[color] = (removedByColor[color] ?? 0) + 1;
+    }
     chainCount = cascade;
     chainPoints += cascadeSize * POINTS_PER_TILE * (cascade + 1);
     removed += cascadeSize;
@@ -185,6 +195,7 @@ export function playMove(
     chainPoints,
     totalPoints: basePoints + chainPoints,
     gameOver: !hasValidMove(current.board),
+    removedByColor,
   };
 }
 

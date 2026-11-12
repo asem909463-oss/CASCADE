@@ -111,6 +111,7 @@ describe('CASCADE puzzle engine', () => {
     expect(result!.chainCount).toBeGreaterThan(0);
     expect(result!.chainPoints).toBeGreaterThan(0);
     expect(result!.totalPoints).toBe(result!.basePoints + result!.chainPoints);
+    expect(Object.values(result!.removedByColor).reduce((sum, count) => sum + (count ?? 0), 0)).toBe(result!.removed);
   });
 
   it('stops at the explicit cascade safety ceiling and leaves remaining groups playable', () => {
