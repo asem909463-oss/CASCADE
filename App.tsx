@@ -425,12 +425,19 @@ function HomeScreen({
       <View style={styles.homeHero}>
         <View style={styles.eyebrowRow}>
           <View style={styles.eyebrowDot} />
-          <Text style={styles.eyebrow}>A MOMENT OF FLOW</Text>
+          <Text style={styles.eyebrow}>{save.gamesPlayed === 0 ? 'WELCOME TO YOUR FIRST CASCADE' : 'A MOMENT OF FLOW'}</Text>
         </View>
         <Text style={styles.wordmark}>CASCADE</Text>
         <Text style={styles.homeSubtitle}>{save.gamesPlayed === 0 ? 'Your first little cascade starts here.' : 'Clear a little space. Find your rhythm.'}</Text>
       </View>
       <MiniMosaic width={artWidth} />
+      {save.gamesPlayed === 0 && (
+        <View style={styles.firstRunCard}>
+          <Text style={styles.firstRunKicker}>YOUR FIRST CASCADE</Text>
+          <Text style={styles.firstRunCopy}>One small clear can turn into something brilliant.</Text>
+          <Text style={styles.firstRunSpark}>✦</Text>
+        </View>
+      )}
       <View style={styles.dailyStreakBanner}>
         <Text style={styles.dailyStreakSpark}>✦</Text>
         <View style={{ flex: 1 }}>
@@ -464,7 +471,7 @@ function HomeScreen({
           <View style={styles.dailySeal}><Text style={styles.dailySealText}>D</Text></View>
           <View style={styles.dailyTextWrap}>
             <Text style={styles.dailyTitle}>Daily puzzle</Text>
-            <Text style={styles.dailySubtitle}>{formatDailyDate()} · same board for everyone</Text>
+            <Text style={styles.dailySubtitle}>{save.dailyScores[new Date().toISOString().slice(0, 10)] !== undefined ? 'Today complete · replay to beat your score' : `${formatDailyDate()} · same board for everyone`}</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </GameButton>
@@ -920,6 +927,10 @@ const styles = StyleSheet.create({
   wordmark: { fontFamily: TYPE.display, fontSize: 42, letterSpacing: 3.1, color: COLORS.ink, lineHeight: 49 },
   homeSubtitle: { marginTop: 8, textAlign: 'center', fontFamily: TYPE.display, fontStyle: 'italic', fontSize: 17, color: COLORS.inkSoft, lineHeight: 24 },
   mosaicWrap: { alignSelf: 'center', marginTop: 12, marginBottom: 3, alignItems: 'center', justifyContent: 'center' },
+  firstRunCard: { minHeight: 68, borderRadius: 19, paddingHorizontal: 15, paddingVertical: 11, backgroundColor: '#FFE4D9', borderWidth: 1, borderColor: '#FFC6B6', marginTop: 5, marginBottom: 7, position: 'relative', justifyContent: 'center' },
+  firstRunKicker: { color: '#D96B58', fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
+  firstRunCopy: { color: '#89665A', fontSize: 11, marginTop: 5, paddingRight: 28 },
+  firstRunSpark: { position: 'absolute', right: 15, top: 16, color: '#F4A83E', fontSize: 25 },
   dailyStreakBanner: { marginTop: 7, marginBottom: 8, minHeight: 58, borderRadius: 18, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF0D6', borderWidth: 1, borderColor: '#FFE0AA' },
   dailyStreakSpark: { color: '#F29B38', fontSize: 25, fontWeight: '900' },
   dailyStreakTitle: { color: '#B87531', fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
