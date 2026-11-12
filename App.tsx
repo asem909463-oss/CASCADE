@@ -391,6 +391,7 @@ export default function App() {
           score={score}
           best={save.highScore}
           campaignObjective={mode === 'campaign' ? campaignObjectiveLabel(getCampaignLevel(campaignLevel)) : ''}
+          campaignProgress={mode !== 'campaign' ? 0 : getCampaignLevel(campaignLevel).objective === 'score' ? score / getCampaignLevel(campaignLevel).targetScore : getCampaignLevel(campaignLevel).objective === 'tiles' ? tilesClearedRef.current / getCampaignLevel(campaignLevel).objectiveTarget : chain / getCampaignLevel(campaignLevel).objectiveTarget}
           chain={chain}
           movesLeft={movesLeft}
           lastClear={lastClear}
@@ -644,6 +645,7 @@ function GameScreen({
   dailyDate,
   campaignLevel,
   campaignObjective,
+  campaignProgress,
   score,
   best,
   chain,
@@ -663,6 +665,7 @@ function GameScreen({
   dailyDate: string;
   campaignLevel: number;
   campaignObjective: string;
+  campaignProgress: number;
   score: number;
   best: number;
   chain: number;
@@ -704,7 +707,7 @@ function GameScreen({
       {(mode === 'daily' || mode === 'campaign') && (
         <View style={styles.goalRow}>
           <Text style={styles.goalText}>{mode === 'campaign' ? 'LEVEL OBJECTIVE' : 'CHALLENGE MARK'}</Text>
-          <View style={styles.goalTrack}><View style={[styles.goalFill, { width: `${Math.min(100, (score / (mode === 'campaign' ? getCampaignLevel(campaignLevel).targetScore : DAILY_GOAL)) * 100)}%` }]} /></View>
+          <View style={styles.goalTrack}><View style={[styles.goalFill, { width: `${Math.min(100, (mode === 'campaign' ? campaignProgress : score / DAILY_GOAL) * 100)}%` }]} /></View>
           <Text style={styles.goalValue}>{mode === 'campaign' ? campaignObjective : DAILY_GOAL.toLocaleString()}</Text>
         </View>
       )}
