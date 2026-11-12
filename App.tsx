@@ -5,7 +5,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, createBoard, createRandom, findGroup, playMove, type Board, type TileColor } from './src/game/engine';
-import { loadBestScore, saveBestScore } from './src/storage/save';
+import { loadBestScore, loadGameState, saveBestScore, saveGameState } from './src/storage/save';
 
 const PALETTE: Record<TileColor, string> = {
   coral: '#FF6B70', amber: '#FFBE55', mint: '#50D6B0', blue: '#5B9CFF', violet: '#A78BFA',
@@ -24,9 +24,19 @@ export default function App() {
   const [selected, setSelected] = useState<{ row: number; col: number } | null>(null);
   const [moves, setMoves] = useState(0);
   const [over, setOver] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    loadBestScore().then(setBest);
+    Promise.all([loadBestScore(), loadGameState()]).then(([savedBest, savedGame]) => {
+      setBest(savedBest);
+      if (savedGame) {
+        setBoard(savedGame.board);
+        setScore(savedGame.score);
+        setMoves(savedGame.moves);
+        setOver(false);
+      }
+      setReady(true);
+    }).catch(() => setReady(true));
   }, []);
 
   useEffect(() => {
@@ -35,6 +45,10 @@ export default function App() {
       saveBestScore(score);
     }
   }, [score, best]);
+
+  useEffect(() => {
+    if (ready) saveGameState(board, score, moves);
+  }, [board, score, moves, ready]);
 
   const selectedGroup = useMemo(
     () => selected ? findGroup(board, selected.row, selected.col) : [],
