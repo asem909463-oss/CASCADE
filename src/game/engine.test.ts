@@ -39,4 +39,52 @@ describe('CASCADE board engine', () => {
     expect(hasLegalMove(dead)).toBe(false);
     expect(hasLegalMove(live)).toBe(true);
   });
+
+  it('preserves every surviving tile and its vertical order', () => {
+    const fixture = board([
+      'AABCDEFGH',
+      'AABCDEFGH',
+      'AABCDEFGH',
+      'AABCDEFGH',
+      'AABCDEFGH',
+      'AABCDEFGH',
+      'AABCDEFGH',
+      'AABCDEFGH',
+    ]);
+    const original = fixture.map(row => [...row]);
+    const group = findGroup(fixture, 0, 0);
+    const next = removeGroup(fixture, group, createRandom(7));
+    for (let col = 0; col < 8; col += 1) {
+      const expected = original.map(row => row[col]).filter((_, row) => !group.some(cell => cell.row === row && cell.col === col));
+      const actual = next.map(row => row[col]).filter((_, row) => row >= 8 - expected.length);
+      expect(actual).toEqual(expected);
+    }
+  });
+
+  it('collapses an emptied left column and refills only the right edge', () => {
+    const fixture = board(Array.from({ length: 8 }, () => 'ABCDEFGH'));
+    const group = findGroup(fixture, 0, 0);
+    expect(group).toHaveLength(8);
+    const next = removeGroup(fixture, group, createRandom(11));
+    for (let row = 0; row < 8; row += 1) {
+      for (let col = 0; col < 7; col += 1) {
+        expect(next[row][col]).toBe(fixture[row][col + 1]);
+      }
+    }
+    expect(next.every(line => line.length === 8)).toBe(true);
+  });
+
+  it('does not mutate the original board when applying a move', () => {
+    const fixture = board(['AABBBBBB','AACCCCCC','DDDDDDDD','EEEEEEEE','AAAAAAAA','BBBBBBBB','CCCCCCCC','DDDDDDDD']);
+    const snapshot = fixture.map(row => [...row]);
+    removeGroup(fixture, findGroup(fixture, 0, 0), createRandom(5));
+    expect(fixture).toEqual(snapshot);
+  });
+
+  it('returns an empty group for out-of-range coordinates', () => {
+    const fixture = board(['ABCDEFGH','HGFEDCBA','ABCDEFGH','HGFEDCBA','ABCDEFGH','HGFEDCBA','ABCDEFGH','HGFEDCBA']);
+    expect(findGroup(fixture, 8, 8)).toHaveLength(0);
+    expect(findGroup(fixture, -1, 0)).toHaveLength(0);
+  });
+
 });
