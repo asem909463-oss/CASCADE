@@ -4,6 +4,7 @@ import type { Board, Position, TileColor } from '../game/engine';
 import { COLORS, TILE_PALETTE } from '../theme/tokens';
 
 const GAP = 4;
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type Props = {
   board: Board;
@@ -60,6 +61,7 @@ function BoardTile({
 }) {
   const entryScale = useRef(new Animated.Value(1)).current;
   const previousColor = useRef(color);
+  const pressScale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (previousColor.current !== color) {
       previousColor.current = color;
@@ -82,36 +84,27 @@ function BoardTile({
   const palette = TILE_PALETTE[color];
   return (
     <Animated.View style={{ width: size, height: size, margin: GAP, transform: [{ scale: entryScale }] }}>
-      <Pressable
+      <AnimatedPressable
         accessibilityRole="button"
         accessibilityLabel={`${label}, ${color} tile`}
         accessibilityHint={preview ? 'Selected group. Tap any tile in this group again to clear it.' : 'Tap to inspect this connected group before clearing it.'}
         disabled={disabled}
+        onPressIn={() => Animated.spring(pressScale, { toValue: 0.92, speed: 30, bounciness: 5, useNativeDriver: true }).start()}
+        onPressOut={() => Animated.spring(pressScale, { toValue: 1, speed: 25, bounciness: 5, useNativeDriver: true }).start()}
         onPress={onPress}
-        style={({ pressed }) => [
-          styles.tile,
-          preview && styles.preview,
-          {
-            width: size,
-            height: size,
-            backgroundColor: palette.fill,
-            borderColor: palette.edge,
-            transform: [{ translateY: pressed ? 1.5 : 0 }, { scale: pressed ? 0.94 : 1 }],
-            opacity: pressed ? 0.83 : 1,
-          },
-        ]}
+        style={[styles.tile, preview && styles.preview, { width: size, height: size, backgroundColor: palette.fill, borderColor: palette.edge, transform: [{ scale: pressScale }] }]}
       >
         <View style={[styles.glint, { backgroundColor: palette.highlight }]} />
         <Text style={[styles.symbol, { fontSize: Math.max(10, size * 0.31) }]}>{palette.symbol}</Text>
-      </Pressable>
+      </AnimatedPressable>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   frame: {
-    backgroundColor: '#E9E1D4',
-    borderColor: '#D6CCBC',
+    backgroundColor: '#FFF0DF',
+    borderColor: '#F1D6BA',
     borderWidth: 1,
     borderRadius: 25,
     padding: 4,
@@ -140,7 +133,7 @@ const styles = StyleSheet.create({
   preview: {
     borderWidth: 2.5,
     borderColor: '#FFF9E8',
-    shadowColor: '#172324',
+    shadowColor: '#C48D69',
     shadowOpacity: 0.35,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 0 },
