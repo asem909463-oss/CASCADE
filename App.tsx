@@ -24,6 +24,7 @@ import {
   DAILY_RULESET_VERSION,
   formatDailyDate,
   hasValidMove,
+  findGroup,
   mulberry32,
   playMove,
   Position,
@@ -60,6 +61,7 @@ export default function App() {
   const [save, setSave] = useState<SaveData>({ ...DEFAULT_SAVE });
   const [hydrated, setHydrated] = useState(false);
   const [lastClear, setLastClear] = useState<{ points: number; chain: number } | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const randomRef = useRef<StatefulRandom>(mulberry32(1));
   const finishedRef = useRef(false);
   const inputLockedRef = useRef(false);
@@ -102,7 +104,7 @@ export default function App() {
     if (hydrated) void saveData(save);
   }, [hydrated, save]);
 
-  const feedback = useCallback((kind: 'clear' | 'chain' | 'invalid') => {
+  const feedback = useCallback((kind: 'clear' | 'chain' | 'invalid' | 'inspect') => {
     if (save.hapticsEnabled) {
       if (kind === 'chain') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       else if (kind === 'clear') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -129,6 +131,7 @@ export default function App() {
     setGameDate(challengeDate);
     setChain(0);
     setLastClear(null);
+    setSelectedPosition(null);
     setMovesLeft(DAILY_MOVES);
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     inputLockedRef.current = false;
@@ -165,6 +168,7 @@ export default function App() {
     bestAtStartRef.current = run.bestAtStart;
     setChain(0);
     setLastClear(null);
+    setSelectedPosition(null);
     finishedRef.current = false;
     setScreen('game');
   }, [save.currentRun]);
@@ -210,11 +214,23 @@ export default function App() {
 
   const onTilePress = useCallback((position: Position) => {
     if (finishedRef.current || inputLockedRef.current) return;
-    const result = playMove(board, position, randomRef.current);
-    if (!result) {
+    const group = findGroup(board, position);
+    if (group.length < 2) {
+      setSelectedPosition(null);
       feedback('invalid');
       return;
     }
+    const alreadyInspected = selectedPosition !== null && group.some(
+      ({ row, col }) => row === selectedPosition.row && col === selectedPosition.col,
+    );
+    if (!alreadyInspected) {
+      setSelectedPosition(position);
+      feedback('inspect');
+      return;
+    }
+    const result = playMove(board, position, randomRef.current);
+    if (!result) return;
+    setSelectedPosition(null);
     inputLockedRef.current = true;
     setInputLocked(true);
     transitionTimerRef.current = setTimeout(() => {
@@ -281,7 +297,7 @@ export default function App() {
       ...current,
       currentRun: snapshot,
     }));
-  }, [board, clearFade, feedback, finishGame, gameDate, mode, movesLeft, reduceMotion, score]);
+  }, [board, clearFade, feedback, finishGame, gameDate, mode, movesLeft, reduceMotion, score, selectedPosition]);
 
   const playAgain = () => startGame(mode);
   const backToHome = () => setScreen('home');
@@ -324,6 +340,7 @@ export default function App() {
           chain={chain}
           movesLeft={movesLeft}
           lastClear={lastClear}
+          selectedPosition={selectedPosition}
           clearFade={clearFade}
           inputLocked={inputLocked}
           reduceMotion={reduceMotion}
@@ -484,6 +501,7 @@ function GameScreen({
   chain,
   movesLeft,
   lastClear,
+  selectedPosition,
   clearFade,
   inputLocked,
   reduceMotion,
@@ -500,6 +518,7 @@ function GameScreen({
   chain: number;
   movesLeft: number;
   lastClear: { points: number; chain: number } | null;
+  selectedPosition: Position | null;
   clearFade: Animated.Value;
   inputLocked: boolean;
   reduceMotion: boolean;
@@ -540,7 +559,7 @@ function GameScreen({
         </View>
       )}
       <View style={styles.boardStage}>
-        <BoardGrid board={board} width={boardWidth} onTap={onTilePress} disabled={inputLocked} reduceMotion={reduceMotion} />
+        <BoardGrid board={board} width={boardWidth} onTap={onTilePress} previewPositions={selectedPosition ? findGroup(board, selectedPosition) : []} disabled={inputLocked} reduceMotion={reduceMotion} />
         {!!lastClear && (
           <Animated.View pointerEvents="none" style={[styles.clearToast, { opacity: clearFade, transform: [{ translateY: clearFade.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }]}>
             <Text style={styles.clearToastText}>+{lastClear.points.toLocaleString()}</Text>
@@ -551,9 +570,11 @@ function GameScreen({
       <View style={styles.gameHint}>
         <View style={styles.hintGlyph}><Text style={styles.hintGlyphText}>✦</Text></View>
         <Text style={[styles.hintCopy, compact && { fontSize: 12 }]}>
-          Tap a group of two or more{mode === 'daily' ? ' · 20 moves' : ''}
+          {selectedPosition
+            ? `${findGroup(board, selectedPosition).length} stones · +${(findGroup(board, selectedPosition).length * 10 + Math.max(0, findGroup(board, selectedPosition).length - 4) * 5).toLocaleString()} · tap again to clear`
+            : `Inspect a group, then commit your move${mode === 'daily' ? ' · 20 moves' : ''}`}
         </Text>
-        {chain > 0 ? <Text style={styles.chainTag}>CHAIN ×{chain + 1}</Text> : <Text style={styles.hintRight}>FIND YOUR FLOW</Text>}
+        {chain > 0 ? <Text style={styles.chainTag}>CHAIN ×{chain + 1}</Text> : <Text style={styles.hintRight}>{selectedPosition ? 'READY?' : 'CHOOSE CAREFULLY'}</Text>}
       </View>
       <View style={styles.colorLegend}>
         <View style={[styles.legendDot, { backgroundColor: COLORS.coral }]} />
