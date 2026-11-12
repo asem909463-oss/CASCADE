@@ -110,7 +110,7 @@ export default function App() {
       else if (kind === 'clear') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       else void Haptics.selectionAsync();
     }
-    if (save.soundEnabled && kind !== 'invalid') {
+    if (save.soundEnabled && (kind === 'clear' || kind === 'chain')) {
       const player = kind === 'chain' ? chainSound : popSound;
       void player.seekTo(0).then(() => player.play()).catch(() => undefined);
     }
