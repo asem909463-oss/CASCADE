@@ -12,11 +12,11 @@ Included:
 - Group removal, vertical gravity, left column collapse and right-side refill
 - Provisional group-size scoring
 - Game-over detection and restart
-- Local personal-best persistence
+- Local personal-best and resumable game-state persistence with corrupt-save validation
 - Haptic feedback
 - Initial deterministic game-engine tests
 
-Not yet implemented: chain-reaction rules, Daily Challenge UI/seed schedule, full run recovery, sound controls, final animations, backend/leaderboards, onboarding and store assets.
+Not yet implemented: chain-reaction rules, Daily Challenge UI/seed schedule, cloud saves, sound controls, final animations, backend/leaderboards, onboarding and store assets.
 
 ## Run locally
 
