@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, createBoard, createRandom, findGroup, playMove, type Board, type TileColor } from './src/game/engine';
+import { COLORS, createBoard, createRandom, findGroup, hasLegalMove, playMove, type Board, type TileColor } from './src/game/engine';
 import { loadBestScore, loadGameState, saveBestScore, saveGameState } from './src/storage/save';
 
 const PALETTE: Record<TileColor, string> = {
@@ -33,7 +33,7 @@ export default function App() {
         setBoard(savedGame.board);
         setScore(savedGame.score);
         setMoves(savedGame.moves);
-        setOver(false);
+        setOver(!hasLegalMove(savedGame.board));
       }
       setReady(true);
     }).catch(() => setReady(true));
