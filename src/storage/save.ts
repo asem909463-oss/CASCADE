@@ -135,7 +135,7 @@ function validLevelMap(value: unknown, maximum = Number.MAX_SAFE_INTEGER): Recor
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const result: Record<string, number> = {};
   for (const [key, score] of Object.entries(value)) {
-    if (/^[1-9]\d{0,2}$/.test(key) && Number.isSafeInteger(score) && (score as number) >= 0) {
+    if (/^[1-9]\d{0,2}$/.test(key) && Number(key) <= 500 && Number.isSafeInteger(score) && (score as number) >= 0) {
       result[key] = Math.min(maximum, score as number);
     }
   }
