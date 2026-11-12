@@ -9,7 +9,7 @@ describe('CASCADE board engine', () => {
   });
 
   it('finds orthogonal groups and excludes diagonals', () => {
-    const fixture = board(['ABBBBBBB','BACCCCCC','DDDDDDDD','EEEEEEEE','AAAAAAAA','BBBBBBBB','CCCCCCCC','DDDDDDDD']);
+    const fixture = board(['ABBBBBBB','ABCCCCCC','DDDDDDDD','EEEEEEEE','AAAAAAAA','BBBBBBBB','CCCCCCCC','DDDDDDDD']);
     expect(findGroup(fixture, 0, 0)).toHaveLength(2);
     expect(findGroup(fixture, 0, 0)).not.toContainEqual({ row: 1, col: 1 });
   });
