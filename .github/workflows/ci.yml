@@ -1,10 +1,13 @@
-name: CASCADE CI
+name: CASCADE Release Checks
 
 on:
   push:
-    branches: [main, "build/**"]
+    branches: [main, "feature/**"]
   pull_request:
     branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   validate:
@@ -17,11 +20,13 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install dependencies
-        run: npm install
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Dependency security audit
+        run: npm audit --audit-level=high
       - name: TypeScript
         run: npm run typecheck
-      - name: Game engine tests
+      - name: Game and save tests
         run: npm test
       - name: Export iOS bundle
-        run: npx expo export --platform ios --output-dir dist
+        run: npx expo export --platform ios --no-bytecode --output-dir dist
