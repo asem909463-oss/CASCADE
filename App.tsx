@@ -873,7 +873,7 @@ function GameButton({
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
   accessibilityRole?: 'button' | 'switch';
-  accessibilityState?: { checked?: boolean; disabled?: boolean; selected?: boolean; expanded?: boolean; busy?: boolean; }>;
+  accessibilityState?: { checked?: boolean; disabled?: boolean; selected?: boolean; expanded?: boolean; busy?: boolean };
   disabled?: boolean;
 }) {
   const playFeedback = React.useContext(ButtonFeedbackContext);
