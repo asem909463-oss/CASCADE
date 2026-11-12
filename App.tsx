@@ -521,7 +521,10 @@ function MiniMosaic({ width }: { width: number }) {
   return (
     <View style={[styles.mosaicWrap, { width, height: width * 0.68 }]}>
       <View style={[styles.mosaicOrb, { width: width * 0.72, height: width * 0.72, borderRadius: width }]} />
-      <Animated.View style={{ transform: [{ translateY: float.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }), }, { scale: float.interpolate({ inputRange: [0, 1], outputRange: [1, 1.025] })] }}>
+      <Animated.View style={{ transform: [
+        { translateY: float.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }) },
+        { scale: float.interpolate({ inputRange: [0, 1], outputRange: [1, 1.025] }) },
+      ] }}>
       <View style={styles.mosaicGrid}>
         {sequence.map((color, index) => (
           <View key={index} style={[styles.mosaicTile, { backgroundColor: colors[color], transform: [{ rotate: `${(index % 3 - 1) * 3}deg` }] }]}>
