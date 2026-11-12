@@ -30,6 +30,9 @@ export type SaveData = {
   soundEnabled: boolean;
   hapticsEnabled: boolean;
   currentRun: GameSnapshot | null;
+  campaignUnlockedLevel: number;
+  campaignStars: Record<string, number>;
+  campaignBestScores: Record<string, number>;
 };
 
 export const DEFAULT_SAVE: SaveData = {
@@ -45,6 +48,9 @@ export const DEFAULT_SAVE: SaveData = {
   soundEnabled: true,
   hapticsEnabled: true,
   currentRun: null,
+  campaignUnlockedLevel: 1,
+  campaignStars: {},
+  campaignBestScores: {},
 };
 
 function isDateKey(value: unknown): value is string {
@@ -124,6 +130,33 @@ function validDailyScores(value: unknown): Record<string, number> {
   return scores;
 }
 
+
+function validLevelMap(value: unknown, maximum = Number.MAX_SAFE_INTEGER): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const result: Record<string, number> = {};
+  for (const [key, score] of Object.entries(value)) {
+    if (/^[1-9]\\d{0,2}$/.test(key) && Number.isSafeInteger(score) && (score as number) >= 0) {
+      result[key] = Math.min(maximum, score as number);
+    }
+  }
+  return result;
+}
+
+export function completeCampaignLevel(
+  save: Pick<SaveData, 'campaignUnlockedLevel' | 'campaignStars' | 'campaignBestScores'>,
+  level: number,
+  score: number,
+  stars: number,
+): Pick<SaveData, 'campaignUnlockedLevel' | 'campaignStars' | 'campaignBestScores'> {
+  if (!Number.isInteger(level) || level < 1 || level > 500 || !Number.isSafeInteger(score) || score < 0) return save;
+  const key = String(level);
+  return {
+    campaignUnlockedLevel: Math.max(save.campaignUnlockedLevel, Math.min(501, level + 1)),
+    campaignStars: { ...save.campaignStars, [key]: Math.max(save.campaignStars[key] ?? 0, Math.max(0, Math.min(3, Math.floor(stars)))) },
+    campaignBestScores: { ...save.campaignBestScores, [key]: Math.max(save.campaignBestScores[key] ?? 0, score) },
+  };
+}
+
 export async function loadSave(): Promise<SaveData> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY) ?? await AsyncStorage.getItem(LEGACY_STORAGE_KEY);
@@ -147,6 +180,9 @@ export async function loadSave(): Promise<SaveData> {
       soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : DEFAULT_SAVE.soundEnabled,
       hapticsEnabled: typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : DEFAULT_SAVE.hapticsEnabled,
       currentRun: validRun(parsed.currentRun),
+      campaignUnlockedLevel: Math.max(1, Math.min(501, nonNegativeInteger(parsed.campaignUnlockedLevel, 1))),
+      campaignStars: validLevelMap(parsed.campaignStars, 3),
+      campaignBestScores: validLevelMap(parsed.campaignBestScores),
     };
   } catch {
     return { ...DEFAULT_SAVE };

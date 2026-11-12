@@ -8,7 +8,7 @@ const storage = vi.hoisted(() => ({
 
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: storage }));
 
-import { completeDailyChallenge, DEFAULT_SAVE, getActiveDailyStreak, loadSave, saveData } from '../storage/save';
+import { completeCampaignLevel, completeDailyChallenge, DEFAULT_SAVE, getActiveDailyStreak, loadSave, saveData } from '../storage/save';
 
 const validRun = {
   rulesetVersion: DAILY_RULESET_VERSION,
@@ -155,6 +155,21 @@ describe('local save schema', () => {
     expect(getActiveDailyStreak(current, '2026-11-12')).toBe(3);
     expect(getActiveDailyStreak(current, '2026-11-11')).toBe(3);
     expect(getActiveDailyStreak(current, '2026-11-13')).toBe(0);
+  });
+
+  it('unlocks campaign progress and preserves the best star and score result', () => {
+    const first = completeCampaignLevel(DEFAULT_SAVE, 1, 900, 2);
+    expect(first.campaignUnlockedLevel).toBe(2);
+    expect(first.campaignStars['1']).toBe(2);
+    expect(first.campaignBestScores['1']).toBe(900);
+    const replay = completeCampaignLevel(first, 1, 1200, 3);
+    expect(replay.campaignUnlockedLevel).toBe(2);
+    expect(replay.campaignStars['1']).toBe(3);
+    expect(replay.campaignBestScores['1']).toBe(1200);
+  });
+
+  it('rejects invalid campaign completion records', () => {
+    expect(completeCampaignLevel(DEFAULT_SAVE, 501, 900, 3)).toEqual(DEFAULT_SAVE);
   });
 
   it('writes the normalized local save payload through AsyncStorage', async () => {

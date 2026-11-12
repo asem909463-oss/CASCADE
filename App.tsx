@@ -38,6 +38,8 @@ import {
 } from './src/game/engine';
 import { completeDailyChallenge, DEFAULT_SAVE, GameSnapshot, getActiveDailyStreak, loadSave, saveData, SaveData } from './src/storage/save';
 import { COLORS, TYPE } from './src/theme/tokens';
+import { CAMPAIGN_CHAPTERS, CAMPAIGN_LEVEL_COUNT, createCampaignBoard, getCampaignLevel, starsForCampaignScore } from './src/game/campaign';
+import { completeCampaignLevel } from './src/storage/save';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -48,8 +50,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const DAILY_MOVES = 20;
 const DAILY_GOAL = 10_000;
-type Screen = 'home' | 'game' | 'stats' | 'help' | 'settings' | 'privacy' | 'result';
-type Mode = 'endless' | 'daily';
+type Screen = 'home' | 'campaign' | 'game' | 'stats' | 'help' | 'settings' | 'privacy' | 'result';
+type Mode = 'endless' | 'daily' | 'campaign';
 
 export default function App() {
   const { width: screenWidth } = useWindowDimensions();
@@ -58,6 +60,8 @@ export default function App() {
   const chainSound = useAudioPlayer(require('./assets/chain.wav'));
   const [screen, setScreen] = useState<Screen>('home');
   const [mode, setMode] = useState<Mode>('endless');
+  const [campaignLevel, setCampaignLevel] = useState(1);
+  const [campaignWon, setCampaignWon] = useState(false);
   const [board, setBoard] = useState<Board>(() => createBoard());
   const [score, setScore] = useState(0);
   const [chain, setChain] = useState(0);
@@ -142,13 +146,15 @@ export default function App() {
     }
   }, [chainSound, popSound, save.hapticsEnabled, save.soundEnabled]);
 
-  const startGame = useCallback((nextMode: Mode) => {
+  const startGame = useCallback((nextMode: Mode, requestedLevel = campaignLevel) => {
     const now = new Date();
     const challengeDate = now.toISOString().slice(0, 10);
-    const seed = nextMode === 'daily' ? seedFromDate(now) : Math.floor(Math.random() * 0x1_0000_0000);
+    const level = getCampaignLevel(requestedLevel);
+    const seed = nextMode === 'daily' ? seedFromDate(now) : nextMode === 'campaign' ? level.seed : Math.floor(Math.random() * 0x1_0000_0000);
     const random = mulberry32(seed);
     randomRef.current = random;
-    const nextBoard = createBoard(random);
+    const nextBoard = nextMode === 'campaign' ? createCampaignBoard(requestedLevel) : createBoard(random);
+    if (nextMode === 'campaign') { setCampaignLevel(level.number); setCampaignWon(false); }
     setMode(nextMode);
     setBoard(nextBoard);
     setScore(0);
@@ -158,7 +164,7 @@ export default function App() {
     setChain(0);
     setLastClear(null);
     setSelectedPosition(null);
-    setMovesLeft(DAILY_MOVES);
+    setMovesLeft(nextMode === 'campaign' ? level.moveLimit : DAILY_MOVES);
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     inputLockedRef.current = false;
     setInputLocked(false);
@@ -176,7 +182,7 @@ export default function App() {
     };
     setSave((current) => ({ ...current, currentRun: snapshot }));
     setScreen('game');
-  }, [save.highScore]);
+  }, [campaignLevel, save.highScore]);
 
   const resumeGame = useCallback(() => {
     const run = save.currentRun;
@@ -218,6 +224,9 @@ export default function App() {
   const finishGame = useCallback((finalScore: number, tilesCleared: number) => {
     if (finishedRef.current) return;
     finishedRef.current = true;
+    const level = mode === 'campaign' ? getCampaignLevel(campaignLevel) : null;
+    const wonCampaign = !!level && finalScore >= level.targetScore;
+    if (mode === 'campaign') setCampaignWon(wonCampaign);
     setSave((current) => ({
       ...current,
       highScore: Math.max(current.highScore, finalScore),
@@ -234,10 +243,11 @@ export default function App() {
             },
           }
         : {}),
+      ...(wonCampaign && level ? completeCampaignLevel(current, level.number, finalScore, starsForCampaignScore(finalScore, level.targetScore)) : {}),
       currentRun: null,
     }));
     setScreen('result');
-  }, [gameDate, mode]);
+  }, [campaignLevel, gameDate, mode]);
 
   const onTilePress = useCallback((position: Position) => {
     if (finishedRef.current || inputLockedRef.current) return;
@@ -297,11 +307,12 @@ export default function App() {
     feedback(result.chainCount > 0 ? 'chain' : 'clear');
 
     let nextMovesLeft: number | null = null;
-    if (mode === 'daily') {
+    if (mode === 'daily' || mode === 'campaign') {
       const left = movesLeft - 1;
       nextMovesLeft = left;
       setMovesLeft(left);
-      if (left <= 0 || result.gameOver) {
+      const levelGoalReached = mode === 'campaign' && nextScore >= getCampaignLevel(campaignLevel).targetScore;
+      if (levelGoalReached || left <= 0 || result.gameOver) {
         finishGame(nextScore, tilesClearedRef.current);
         return;
       }
@@ -324,9 +335,10 @@ export default function App() {
       ...current,
       currentRun: snapshot,
     }));
-  }, [board, clearFade, feedback, finishGame, gameDate, mode, movesLeft, reduceMotion, score, selectedPosition]);
+  }, [board, campaignLevel, clearFade, feedback, finishGame, gameDate, mode, movesLeft, reduceMotion, score, selectedPosition]);
 
-  const playAgain = () => startGame(mode);
+  const playAgain = () => startGame(mode, mode === 'campaign' && campaignWon ? Math.min(500, campaignLevel + 1) : campaignLevel);
+  const startCampaignLevel = (level: number) => startGame('campaign', level);
   const backToHome = () => setScreen('home');
   const togglePreference = (key: 'soundEnabled' | 'hapticsEnabled') => {
     setSave((current) => ({ ...current, [key]: !current[key] }));
@@ -350,6 +362,7 @@ export default function App() {
           width={screenWidth}
           save={save}
           onResume={resumeGame}
+          onCampaign={() => setScreen('campaign')}
           onPlay={() => requestStartGame('endless')}
           onDaily={() => requestStartGame('daily')}
           onStats={() => setScreen('stats')}
@@ -357,6 +370,7 @@ export default function App() {
           onSettings={() => setScreen('settings')}
         />
       )}
+      {screen === 'campaign' && <CampaignScreen save={save} onBack={backToHome} onStart={startCampaignLevel} />}
       {screen === 'game' && (
         <GameScreen
           width={screenWidth}
@@ -364,6 +378,7 @@ export default function App() {
           board={board}
           mode={mode}
           dailyDate={gameDate}
+          campaignLevel={campaignLevel}
           score={score}
           best={save.highScore}
           chain={chain}
@@ -384,6 +399,8 @@ export default function App() {
           isNewBest={score > bestAtStartRef.current}
           dailyDate={gameDate}
           dailyBest={save.dailyScores[gameDate] ?? 0}
+          campaignLevel={campaignLevel}
+          campaignWon={campaignWon}
           onAgain={playAgain}
           onHome={backToHome}
         />
@@ -405,6 +422,7 @@ export default function App() {
 
 function HomeScreen({
   width,
+  onCampaign,
   save,
   onResume,
   onPlay,
@@ -415,6 +433,7 @@ function HomeScreen({
 }: {
   width: number;
   save: SaveData;
+  onCampaign: () => void;
   onResume: () => void;
   onPlay: () => void;
   onDaily: () => void;
@@ -483,7 +502,8 @@ function HomeScreen({
             <Text style={styles.chevron}>›</Text>
           </GameButton>
         )}
-        <PrimaryButton title="Play endless" subtitle="Your next high score awaits" onPress={onPlay} />
+        <PrimaryButton title="Puzzle journey" subtitle={`${save.campaignUnlockedLevel - 1} of 500 levels completed · Continue your campaign`} onPress={onCampaign} />
+        <SecondaryButton title="Play endless instead" onPress={onPlay} />
         <GameButton onPress={onDaily} style={styles.dailyCard}>
           <View style={styles.dailySeal}><Text style={styles.dailySealText}>D</Text></View>
           <View style={styles.dailyTextWrap}>
@@ -520,6 +540,45 @@ const HOME_PREVIEW_GROUP = (() => {
   }
   return [];
 })();
+
+
+function CampaignScreen({ save, onBack, onStart }: { save: SaveData; onBack: () => void; onStart: (level: number) => void }) {
+  return (
+    <SimpleShell title="Puzzle journey" eyebrow="500 PUZZLES · 10 CHAPTERS" onBack={onBack}>
+      <View style={styles.campaignIntro}>
+        <Text style={styles.campaignIntroTitle}>Think ahead. Make every move count.</Text>
+        <Text style={styles.campaignIntroCopy}>Reach each level’s score goal before you run out of moves. Earn up to three stars and unlock the next puzzle.</Text>
+        <Text style={styles.campaignProgress}>{Math.min(500, save.campaignUnlockedLevel - 1)} / 500 UNLOCKED</Text>
+      </View>
+      {CAMPAIGN_CHAPTERS.map((chapter, chapterIndex) => {
+        const first = chapterIndex * 50 + 1;
+        const completed = Math.max(0, Math.min(50, save.campaignUnlockedLevel - first));
+        return (
+          <View key={chapter} style={styles.chapterBlock}>
+            <View style={styles.chapterHeading}>
+              <Text style={styles.chapterNumber}>CHAPTER {String(chapterIndex + 1).padStart(2, '0')}</Text>
+              <Text style={styles.chapterTitle}>{chapter}</Text>
+              <Text style={styles.chapterProgress}>{completed}/50</Text>
+            </View>
+            <View style={styles.levelGrid}>
+              {Array.from({ length: 50 }, (_, index) => {
+                const level = first + index;
+                const unlocked = level <= save.campaignUnlockedLevel;
+                const stars = save.campaignStars[String(level)] ?? 0;
+                return (
+                  <GameButton key={level} disabled={!unlocked} onPress={() => onStart(level)} style={[styles.levelCell, !unlocked && styles.levelLocked, level === save.campaignUnlockedLevel && styles.levelCurrent]}>
+                    <Text style={[styles.levelCellText, !unlocked && styles.levelLockedText]}>{unlocked ? level : '·'}</Text>
+                    <Text style={styles.levelStars}>{stars ? '★'.repeat(stars) : unlocked ? '○' : ''}</Text>
+                  </GameButton>
+                );
+              })}
+            </View>
+          </View>
+        );
+      })}
+    </SimpleShell>
+  );
+}
 
 function BrandMark() {
   return (
@@ -573,6 +632,7 @@ function GameScreen({
   board,
   mode,
   dailyDate,
+  campaignLevel,
   score,
   best,
   chain,
@@ -590,6 +650,7 @@ function GameScreen({
   board: Board;
   mode: Mode;
   dailyDate: string;
+  campaignLevel: number;
   score: number;
   best: number;
   chain: number;
@@ -611,7 +672,7 @@ function GameScreen({
           <View style={[styles.modeDot, mode === 'daily' && { backgroundColor: COLORS.gold }]} />
           <Text style={styles.modeText}>{mode === 'daily'
             ? `DAILY · ${formatDailyDate(new Date(`${dailyDate}T00:00:00Z`)).toUpperCase()}`
-            : 'ENDLESS'}</Text>
+            : mode === 'campaign' ? `JOURNEY · LEVEL ${campaignLevel}` : 'ENDLESS'}</Text>
         </View>
         <View style={styles.levelCount}><Text style={styles.levelText}>08 × 08</Text></View>
       </View>
@@ -621,18 +682,18 @@ function GameScreen({
           <Text style={styles.scoreNumber}>{score.toLocaleString()}</Text>
         </View>
         <View style={styles.scoreSide}>
-          {mode === 'daily' ? (
+          {mode === 'daily' || mode === 'campaign' ? (
             <><Text style={styles.scoreSideLabel}>MOVES LEFT</Text><Text style={styles.scoreSideValue}>{String(movesLeft).padStart(2, '0')}</Text></>
           ) : (
             <><Text style={styles.scoreSideLabel}>PERSONAL BEST</Text><Text style={styles.scoreSideValue}>{best.toLocaleString()}</Text></>
           )}
         </View>
       </View>
-      {mode === 'daily' && (
+      {(mode === 'daily' || mode === 'campaign') && (
         <View style={styles.goalRow}>
-          <Text style={styles.goalText}>CHALLENGE MARK</Text>
-          <View style={styles.goalTrack}><View style={[styles.goalFill, { width: `${Math.min(100, (score / DAILY_GOAL) * 100)}%` }]} /></View>
-          <Text style={styles.goalValue}>{DAILY_GOAL.toLocaleString()}</Text>
+          <Text style={styles.goalText}>{mode === 'campaign' ? 'LEVEL GOAL' : 'CHALLENGE MARK'}</Text>
+          <View style={styles.goalTrack}><View style={[styles.goalFill, { width: `${Math.min(100, (score / (mode === 'campaign' ? getCampaignLevel(campaignLevel).targetScore : DAILY_GOAL)) * 100)}%` }]} /></View>
+          <Text style={styles.goalValue}>{(mode === 'campaign' ? getCampaignLevel(campaignLevel).targetScore : DAILY_GOAL).toLocaleString()}</Text>
         </View>
       )}
       <View style={styles.boardStage}>
@@ -649,7 +710,7 @@ function GameScreen({
         <Text style={[styles.hintCopy, compact && { fontSize: 12 }]}>
           {selectedPosition
             ? `${findGroup(board, selectedPosition).length} stones · +${(findGroup(board, selectedPosition).length * POINTS_PER_TILE + Math.max(0, findGroup(board, selectedPosition).length - 4) * GROUP_BONUS_PER_TILE_OVER_FOUR).toLocaleString()} · tap again to clear`
-            : `Inspect a group, then commit your move${mode === 'daily' ? ' · 20 moves' : ''}`}
+            : `Inspect a group, then commit your move${mode === 'daily' ? ' · 20 moves' : mode === 'campaign' ? ` · goal ${getCampaignLevel(campaignLevel).targetScore.toLocaleString()}` : ''}`}
         </Text>
         {chain > 0 ? <Text style={styles.chainTag}>CHAIN ×{chain + 1}</Text> : <Text style={styles.hintRight}>{selectedPosition ? 'READY?' : 'CHOOSE CAREFULLY'}</Text>}
       </View>
@@ -668,6 +729,8 @@ function GameScreen({
 function ResultScreen({
   mode,
   dailyDate,
+  campaignLevel,
+  campaignWon,
   score,
   isNewBest,
   dailyBest,
@@ -676,6 +739,8 @@ function ResultScreen({
 }: {
   mode: Mode;
   dailyDate: string;
+  campaignLevel: number;
+  campaignWon: boolean;
   score: number;
   isNewBest: boolean;
   dailyBest: number;
@@ -688,15 +753,15 @@ function ResultScreen({
       <View style={styles.resultMark}><Text style={styles.resultMarkText}>{mode === 'daily' ? 'D' : '✦'}</Text></View>
       <Text style={styles.resultEyebrow}>{mode === 'daily'
         ? `DAILY · ${formatDailyDate(new Date(`${dailyDate}T00:00:00Z`)).toUpperCase()} · COMPLETE`
-        : 'A LOVELY LITTLE RUN'}</Text>
-      <Text style={styles.resultTitle}>{isNewBest ? 'New personal best.' : 'Nicely done.'}</Text>
+        : mode === 'campaign' ? `PUZZLE JOURNEY · LEVEL ${campaignLevel}` : 'A LOVELY LITTLE RUN'}</Text>
+      <Text style={styles.resultTitle}>{mode === 'campaign' ? (campaignWon ? 'Puzzle solved!' : 'Not quite yet.') : isNewBest ? 'New personal best.' : 'Nicely done.'}</Text>
       <Text style={styles.resultScore}>{score.toLocaleString()}</Text>
-      <Text style={styles.resultCaption}>{mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
+      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${saveCampaignStarsPlaceholder}` : 'Reach the target score to unlock the next puzzle') : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
       {mode === 'daily' && <Text style={styles.dailyRecord}>CHALLENGE BEST · {dailyBest.toLocaleString()}</Text>}
       <View style={styles.resultDecor}><MiniMosaic width={176} /></View>
       <View style={styles.resultButtons}>
         <PrimaryButton
-          title={mode === 'daily' ? (isCurrentDaily ? 'Play today again' : 'Start today’s challenge') : 'Play another round'}
+          title={mode === 'campaign' ? (campaignWon ? (campaignLevel >= 500 ? 'Campaign complete' : 'Next puzzle') : 'Try this puzzle again') : mode === 'daily' ? (isCurrentDaily ? 'Play today again' : 'Start today’s challenge') : 'Play another round'}
           onPress={onAgain}
         />
         <SecondaryButton title="Back to home" onPress={onHome} />
@@ -939,6 +1004,22 @@ const styles = StyleSheet.create({
   loadingPage: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 15 },
   loadingCopy: { color: COLORS.inkSoft, fontFamily: TYPE.display, fontStyle: 'italic', fontSize: 16 },
   homeContent: { flexGrow: 1, paddingHorizontal: 22, paddingBottom: 20 },
+  campaignIntro: { backgroundColor: '#FFF0D6', padding: 16, marginBottom: 18, borderRadius: 18 },
+  campaignIntroTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
+  campaignIntroCopy: { color: COLORS.inkSoft, fontSize: 12, lineHeight: 18, marginTop: 6 },
+  campaignProgress: { color: COLORS.coralDeep, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, marginTop: 12 },
+  chapterBlock: { marginBottom: 22 },
+  chapterHeading: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 10 },
+  chapterNumber: { color: COLORS.coralDeep, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  chapterTitle: { flex: 1, color: COLORS.ink, fontSize: 16, fontWeight: '800' },
+  chapterProgress: { color: COLORS.muted, fontSize: 10, fontWeight: '800' },
+  levelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  levelCell: { width: '17%', minWidth: 43, aspectRatio: 1, backgroundColor: COLORS.paperBright, borderRadius: 12, borderWidth: 1, borderColor: COLORS.line, alignItems: 'center', justifyContent: 'center' },
+  levelCurrent: { backgroundColor: '#FFE1D5', borderColor: COLORS.coral },
+  levelLocked: { backgroundColor: '#F1EAE0', opacity: 0.75 },
+  levelCellText: { color: COLORS.ink, fontSize: 12, fontWeight: '900' },
+  levelLockedText: { color: COLORS.muted },
+  levelStars: { color: '#D69A36', fontSize: 7, minHeight: 9, letterSpacing: 0.2 },
   homeHeader: { height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brandLockup: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   brandIcon: { width: 28, height: 27, justifyContent: 'center', alignItems: 'center' },

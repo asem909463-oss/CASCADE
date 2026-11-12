@@ -3,7 +3,17 @@
 **QA and implementation owner:** ChatGPT  
 **Status:** Test plan and release checklist; every result must be verified against the current commit.
 
-## 1. Pure game-engine tests
+## 1. Campaign progression tests
+
+- Every campaign level has a stable seed, score target and move limit.
+- Every seeded campaign board has at least one legal move.
+- A level unlocks the next level only when its score goal is reached.
+- Replays preserve the highest star rating and best score.
+- Locked levels cannot be launched.
+- Chapter boundaries and the final level are correct.
+- Campaign progress survives app restart and legacy saves migrate safely.
+
+## 2. Pure game-engine tests
 
 Build deterministic unit tests for the board engine. Use fixed board fixtures and assert exact resulting boards.
 
@@ -50,7 +60,7 @@ The score curve and chain timing must be approved before writing expected numeri
 - Device timezone changes do not cause different daily challenges for players in the same challenge region/date.
 - Seed or ruleset version changes are explicit and testable.
 
-## 2. Persistence and offline tests
+## 3. Persistence and offline tests
 
 - Best score survives app restart.
 - An interrupted run restores only if resume is an approved feature.
@@ -60,7 +70,7 @@ The score curve and chain timing must be approved before writing expected numeri
 - Gameplay remains usable in airplane mode.
 - Reconnection does not duplicate submissions or overwrite a newer save with stale data.
 
-## 3. UI and interaction tests
+## 4. UI and interaction tests
 
 - Rapid repeated taps cannot trigger overlapping board mutations.
 - Input is disabled only for the intended animation/transition window.
@@ -71,7 +81,7 @@ The score curve and chain timing must be approved before writing expected numeri
 - Text, colour and selection states remain legible.
 - App background/foreground transitions do not corrupt a move or save.
 
-## 4. Performance and reliability
+## 5. Performance and reliability
 
 - Measure cold start, frame pacing during removal/gravity/refill, memory use and long-session stability.
 - Test low-end supported iPhones as well as current devices.
@@ -79,7 +89,7 @@ The score curve and chain timing must be approved before writing expected numeri
 - Verify app recovery after backgrounding, interruption and force quit.
 - Record device, OS, build, steps and logs for every performance issue.
 
-## 5. Backend security tests (when backend exists)
+## 6. Backend security tests (when backend exists)
 
 - Exposed tables have deliberate RLS policies.
 - Anonymous/authenticated users cannot read or modify another player's private data.
@@ -90,7 +100,7 @@ The score curve and chain timing must be approved before writing expected numeri
 - Edge Functions validate authentication, input shape, bounds and rate limits.
 - Cloud-save conflict handling is deterministic and documented.
 
-## 6. Bug report template
+## 7. Bug report template
 
 For each finding, report:
 - Severity: Critical / High / Medium / Low.
@@ -103,7 +113,7 @@ For each finding, report:
 - Suspected file/function (only when supported by evidence).
 - Suggested fix and retest result.
 
-## 7. Release gates
+## 8. Release gates
 
 Do not recommend release until:
 - All critical and high-severity defects are fixed or explicitly accepted.
