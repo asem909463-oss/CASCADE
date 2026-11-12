@@ -1,8 +1,7 @@
 # CASCADE — Initial QA & Test Plan
 
-**QA owner:** Claude  
-**Implementation owners:** Manus (client), Perplexity (backend)  
-**Status:** Test design only; no implementation has been audited yet.
+**QA and implementation owner:** ChatGPT  
+**Status:** Test plan and release checklist; every result must be verified against the current commit.
 
 ## 1. Pure game-engine tests
 
@@ -112,6 +111,9 @@ Do not recommend release until:
 - iOS device testing is completed.
 - No visible placeholder or nonfunctional controls remain.
 - Crash, performance and privacy checks are reviewed.
+- The public privacy policy URL is live and matches the app's actual data practices.
+- App Store privacy disclosures match the app's SDKs and actual behavior.
+- A native iOS archive is built and validated; a JavaScript export alone is not a release build.
 - The exact release commit and build are identified.
 
 **Important:** This is a test plan, not a claim that any tests have run or passed.
