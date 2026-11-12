@@ -454,6 +454,8 @@ function HomeScreen({
 }) {
   const previewWidth = Math.min(width - 64, 246);
   const activeDailyStreak = getActiveDailyStreak(save);
+  const nextCampaignLevel = Math.min(CAMPAIGN_LEVEL_COUNT, save.campaignUnlockedLevel);
+  const nextCampaignChapter = getCampaignLevel(nextCampaignLevel).chapterName;
   return (
     <ScrollView contentContainerStyle={styles.homeContent} showsVerticalScrollIndicator={false}>
       <View style={styles.homeHeader}>
@@ -513,7 +515,7 @@ function HomeScreen({
             <Text style={styles.chevron}>›</Text>
           </GameButton>
         )}
-        <PrimaryButton title="Puzzle journey" subtitle={`${save.campaignUnlockedLevel - 1} of 500 levels completed · Continue your campaign`} onPress={onCampaign} />
+        <PrimaryButton title={save.campaignUnlockedLevel > 1 ? 'Continue puzzle journey' : 'Start puzzle journey'} subtitle={`LEVEL ${String(nextCampaignLevel).padStart(3, '0')} · ${nextCampaignChapter} · ${Math.min(500, save.campaignUnlockedLevel - 1)} / 500 COMPLETE`} onPress={onCampaign} />
         <SecondaryButton title="Play endless instead" onPress={onPlay} />
         <GameButton onPress={onDaily} style={styles.dailyCard}>
           <View style={styles.dailySeal}><Text style={styles.dailySealText}>D</Text></View>
@@ -776,6 +778,9 @@ function ResultScreen({
   onHome: () => void;
 }) {
   const isCurrentDaily = dailyDate === new Date().toISOString().slice(0, 10);
+  const campaignStars = mode === 'campaign' && campaignWon
+    ? starsForCampaignWin(score, getCampaignLevel(campaignLevel).targetScore)
+    : 0;
   return (
     <View style={styles.simplePage}>
       <View style={styles.resultMark}><Text style={styles.resultMarkText}>{mode === 'daily' ? 'D' : '✦'}</Text></View>
@@ -784,7 +789,14 @@ function ResultScreen({
         : mode === 'campaign' ? `PUZZLE JOURNEY · LEVEL ${campaignLevel}` : 'A LOVELY LITTLE RUN'}</Text>
       <Text style={styles.resultTitle}>{mode === 'campaign' ? (campaignWon ? 'Puzzle solved!' : 'Not quite yet.') : isNewBest ? 'New personal best.' : 'Nicely done.'}</Text>
       <Text style={styles.resultScore}>{score.toLocaleString()}</Text>
-      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${starsForCampaignWin(score, getCampaignLevel(campaignLevel).targetScore)} stars earned · new puzzle unlocked` : `Objective: ${campaignObjectiveLabel(getCampaignLevel(campaignLevel))}`) : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
+      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${campaignStars} stars earned · new puzzle unlocked` : `Objective: ${campaignObjectiveLabel(getCampaignLevel(campaignLevel))}`) : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
+      {mode === 'campaign' && (
+        <View style={styles.resultStars} accessibilityLabel={`${campaignStars} of 3 stars earned`}>
+          {[1, 2, 3].map((star) => (
+            <Text key={star} style={[styles.resultStar, star <= campaignStars && styles.resultStarEarned]}>★</Text>
+          ))}
+        </View>
+      )}
       {mode === 'daily' && <Text style={styles.dailyRecord}>CHALLENGE BEST · {dailyBest.toLocaleString()}</Text>}
       <View style={styles.resultDecor}><MiniMosaic width={176} /></View>
       <View style={styles.resultButtons}>
@@ -1169,6 +1181,9 @@ const styles = StyleSheet.create({
   resultTitle: { color: COLORS.ink, fontFamily: TYPE.display, fontSize: 28, textAlign: 'center', marginTop: 9 },
   resultScore: { color: COLORS.ink, fontFamily: TYPE.mono, fontSize: 54, fontWeight: '800', marginTop: 16 },
   resultCaption: { color: COLORS.inkSoft, fontSize: 13, marginTop: 2 },
+  resultStars: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 12 },
+  resultStar: { color: '#E8DDCE', fontSize: 32, fontWeight: '900', textShadowColor: 'rgba(80,60,40,0.08)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 2 },
+  resultStarEarned: { color: '#F1B642' },
   dailyRecord: { color: COLORS.coralDeep, fontSize: 10, fontWeight: '900', letterSpacing: 1, marginTop: 14 },
   resultDecor: { height: 162, alignItems: 'center', justifyContent: 'center' },
   resultButtons: { width: '100%', gap: 9 },
