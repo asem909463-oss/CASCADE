@@ -68,7 +68,7 @@ export default function App() {
   }, []);
 
   const onTilePress = useCallback(async (row: number, col: number) => {
-    if (over) return;
+    if (!ready || over) return;
     const group = findGroup(board, row, col);
     if (group.length < 2) {
       setSelected({ row, col });
@@ -83,7 +83,7 @@ export default function App() {
     setSelected(null);
     setOver(result.gameOver);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-  }, [board, over]);
+  }, [board, over, ready]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -124,6 +124,7 @@ export default function App() {
                   return (
                     <Pressable
                       key={col}
+                      disabled={!ready || over}
                       accessibilityRole="button"
                       accessibilityLabel={`${LABELS[color]} tile, row ${row + 1}, column ${col + 1}`}
                       onPress={() => onTilePress(row, col)}
