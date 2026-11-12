@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Dimensions, LayoutAnimation, Platform, Pressable, SafeAreaView, StatusBar,
-  StyleSheet, Text, UIManager, View,
+  Pressable, StatusBar, StyleSheet, Text, View, useWindowDimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, createBoard, createRandom, findGroup, playMove, type Board, type TileColor } from './src/game/engine';
 import { loadBestScore, saveBestScore } from './src/storage/save';
 
@@ -14,10 +14,10 @@ const LABELS: Record<TileColor, string> = {
   coral: 'Coral', amber: 'Amber', mint: 'Mint', blue: 'Blue', violet: 'Violet',
 };
 const GAP = 5;
-const BOARD_WIDTH = Math.min(Dimensions.get('window').width - 36, 430);
-const TILE_SIZE = (BOARD_WIDTH - GAP * 7) / 8;
 
 export default function App() {
+  const { width } = useWindowDimensions();
+  const boardWidth = Math.min(width - 36, 430);
   const [board, setBoard] = useState<Board>(() => createBoard());
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
@@ -27,9 +27,6 @@ export default function App() {
 
   useEffect(() => {
     loadBestScore().then(setBest);
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -49,7 +46,6 @@ export default function App() {
   );
 
   const startNewGame = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setBoard(createBoard());
     setScore(0);
     setMoves(0);
@@ -65,12 +61,6 @@ export default function App() {
       await Haptics.selectionAsync().catch(() => undefined);
       return;
     }
-    LayoutAnimation.configureNext({
-      duration: 190,
-      update: { type: LayoutAnimation.Types.easeInEaseOut },
-      delete: { type: LayoutAnimation.Types.easeIn, property: LayoutAnimation.Properties.opacity },
-      create: { type: LayoutAnimation.Types.easeOut, property: LayoutAnimation.Properties.opacity },
-    });
     const result = playMove(board, row, col, createRandom());
     if (!result) return;
     setBoard(result.board);
@@ -171,7 +161,7 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#10121D' },
   container: { flex: 1, alignItems: 'center', paddingHorizontal: 18, paddingTop: 16, justifyContent: 'space-between' },
-  topLine: { width: '100%', maxWidth: BOARD_WIDTH, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topLine: { width: '100%', maxWidth: 430, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   eyebrow: { color: '#85899D', fontSize: 9, letterSpacing: 2.6, fontWeight: '800', marginBottom: 4 },
   logo: { color: '#F7F6F2', fontSize: 32, letterSpacing: 3.4, fontWeight: '900' },
   logoDot: { color: '#7FE0C0' },
@@ -186,7 +176,7 @@ const styles = StyleSheet.create({
   instructionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 15 },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#7FE0C0' },
   instruction: { color: '#B1B4C3', fontSize: 11, letterSpacing: 0.2 },
-  boardFrame: { width: BOARD_WIDTH, aspectRatio: 1, padding: 8, borderRadius: 22, backgroundColor: '#1A1D2B', borderWidth: 1, borderColor: '#303449' },
+  boardFrame: { width: boardWidth, aspectRatio: 1, padding: 8, borderRadius: 22, backgroundColor: '#1A1D2B', borderWidth: 1, borderColor: '#303449' },
   board: { flex: 1, gap: GAP },
   boardRow: { flex: 1, flexDirection: 'row', gap: GAP },
   tile: { flex: 1, borderRadius: 7, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' },
