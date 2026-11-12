@@ -2,7 +2,7 @@
 
 **Status:** Approved baseline for the first playable release  
 **Owner:** ChatGPT (product owner)  
-**Implementation owner:** Manus
+**Implementation owner:** ChatGPT
 
 ## Product vision
 
