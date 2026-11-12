@@ -1,52 +1,27 @@
-# CASCADE — Team Ownership & Git Workflow
+# CASCADE — Ownership & Git Workflow
 
-## Team
+## Ownership
 
-| Owner | Responsibility | Must not own |
-|---|---|---|
-| ChatGPT | Product owner, project coordination, architecture decisions, review and release gates | Pretending to run agents outside available connections |
-| Manus | Expo app, game engine, UI, animations, sound, haptics, local persistence and client tests | Supabase schema/security ownership |
-| Perplexity | Supabase architecture, SQL migrations, RLS, Edge Functions, backend tests and API contracts | Game UI and gameplay implementation |
-| Claude | Independent QA plans, code review, reproducible bug reports, performance and release audits | Competing game implementation or marketing |
-| Marketing AI (TBD) | Marketing and launch creative, once appointed | Product or engineering decisions |
+ChatGPT owns the product direction, implementation, code review, testing coordination, privacy documentation and release checklist for this project. No external AI agent is assigned implementation, QA or marketing work unless the user explicitly changes that decision.
 
 ## Repository rules
 
 - Repository: `asem909463-oss/CASCADE`.
-- `main` is the integration branch and should remain buildable.
-- Each agent works on a clearly named branch.
-- Suggested branches: `manus/game-client`, `perplexity/backend`, `claude/qa`.
-- Documentation-only coordination work uses `docs/*`.
-- Do not force-push, rewrite shared history, or overwrite another agent's files.
-- Do not push unfinished work directly to `main`.
-- Submit a pull request for integration; include a summary, test evidence, screenshots where useful, and known limitations.
-- Before editing, inspect the latest `main` and check for overlapping work.
-- Keep commits focused and descriptive.
+- `main` is the release integration branch and must remain buildable.
+- Work on a named feature branch and open a pull request into `main`.
+- Never force-push or rewrite shared history.
+- Do not describe code generation as completion; report actual test and build evidence.
+- Keep the product offline-first unless a future feature is explicitly approved.
 
-## File ownership boundaries
+## Release reporting
 
-- Manus: app source, Expo configuration, assets and client tests.
-- Perplexity: `supabase/**`, backend documentation and backend tests.
-- Claude: QA documentation and isolated test tooling only, coordinated with the implementation owner.
-- Shared contracts: agree changes with both client and backend owners before merging.
+Every milestone report must include:
+- Completed changes and exact branch/commit.
+- Test commands and actual results.
+- Build/export evidence.
+- Remaining blockers, including anything requiring the user's Apple or Expo account.
+- The next concrete step.
 
-## Integration protocol
+## Release discipline
 
-1. Owner reports the branch, commit SHA, changed files, tests run and blockers.
-2. Claude reviews the relevant implementation and reports reproducible findings.
-3. ChatGPT checks product scope, ownership boundaries, security implications and test evidence.
-4. The responsible owner fixes requested changes.
-5. Merge only after review and required checks pass.
-6. Re-check the integrated `main`; do not assume a green branch means the combined app works.
-
-## Reporting format
-
-Every milestone update must include:
-- **Completed:** specific working outcomes.
-- **Branch / commit:** exact Git reference.
-- **Tests:** commands or test names and actual results.
-- **Evidence:** screenshots, logs or PR link when relevant.
-- **Blockers:** access, credentials, dependencies or decisions needed.
-- **Next:** the next concrete deliverable.
-
-Never report a task as complete merely because code was generated. Never invent test results.
+A green TypeScript/test/bundle workflow is necessary but not sufficient for App Store release. The exact release commit must also pass native iOS build, device QA, privacy disclosure review, App Store metadata and screenshot checks. Never claim App Store approval or device testing without evidence.
