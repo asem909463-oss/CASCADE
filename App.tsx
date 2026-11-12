@@ -668,7 +668,7 @@ function HelpScreen({ onBack }: { onBack: () => void }) {
     <SimpleShell title="How to play" eyebrow="THE SIMPLE JOY OF IT" onBack={onBack}>
       <View style={styles.helpCard}>
         <HelpStep number="01" title="Spot a little cluster" body="Look for two or more same-color tiles sharing an edge. Diagonals don’t connect." color={COLORS.coral} />
-        <HelpStep number="02" title="Tap to clear" body="One tap clears the whole connected group. Bigger groups make brighter scores." color={COLORS.gold} />
+        <HelpStep number="02" title="Inspect, then commit" body="Tap once to outline the whole group and preview its points. Tap any tile in that same group again to clear it. Tap a different group to reconsider." color={COLORS.gold} />
         <HelpStep number="03" title="Let gravity do its thing" body="Tiles fall, empty columns close up, and fresh colors tumble in from above." color={COLORS.mint} />
         <HelpStep number="04" title="Chase the cascade" body="New tiles can join old neighbors. Those chain reactions earn bonus points." color={COLORS.violet} last />
       </View>
