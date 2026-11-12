@@ -49,12 +49,24 @@ export function getCampaignLevel(level: number): CampaignLevel {
 }
 
 export function createCampaignBoard(level: number): Board {
-  const { seed } = getCampaignLevel(level);
+  const definition = getCampaignLevel(level);
+  const { seed } = definition;
+  const hasObjectiveSupply = (board: Board) => definition.objective !== 'color' ||
+    board.flat().filter((color) => color === definition.objectiveColor).length >= definition.objectiveTarget;
   let attempt = 0;
-  while (attempt < 32) {
+  while (attempt < 128) {
     const board = createBoard(mulberry32((seed + attempt) >>> 0));
-    if (hasValidMove(board)) return board;
+    if (hasValidMove(board) && hasObjectiveSupply(board)) return board;
     attempt += 1;
+  }
+  // A guaranteed legal fallback; colour puzzles begin with sixteen target-colour tiles.
+  if (definition.objective === 'color' && definition.objectiveColor) {
+    const otherColors = TILE_COLORS.filter((color) => color !== definition.objectiveColor);
+    return Array.from({ length: 8 }, (_, row) =>
+      Array.from({ length: 8 }, (_, col) => col < 2
+        ? definition.objectiveColor!
+        : otherColors[(row + Math.floor((col - 2) / 2)) % otherColors.length]),
+    );
   }
   // A guaranteed legal fallback: every row contains horizontal same-colour pairs.
   return Array.from({ length: 8 }, (_, row) =>

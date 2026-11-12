@@ -1,6 +1,6 @@
 # CASCADE
 
-An original, offline-first Expo / React Native puzzle game. CASCADE is built around an 8×8 board, five tactile tile families, connected-group clears, gravity, column collapse, refill and scored chain reactions. Endless play and a versioned UTC-date daily puzzle share a pure TypeScript rules engine. Puzzle Journey adds a 500-stage, 10-chapter campaign with limited moves and score, tile-clear, and chain objectives. Level unlocks, best scores, and up to three stars per level persist locally. An unfinished run can be resumed locally, including its seeded random sequence.
+An original, offline-first Expo / React Native puzzle game. CASCADE is built around an 8×8 board, five tactile tile families, connected-group clears, gravity, column collapse, refill and scored chain reactions. Endless play and a versioned UTC-date daily puzzle share a pure TypeScript rules engine. Puzzle Journey adds a 500-stage, 10-chapter campaign with limited moves and score, tile-clear, chain, and colour-specific objectives. Level unlocks, best scores, and up to three stars per level persist locally. An unfinished run can be resumed locally, including its seeded random sequence.
 
 ## Run locally
 
@@ -27,7 +27,7 @@ The score curve, daily progress marker, uniform refill distribution and seven-wa
 
 - `App.tsx` — home, game, daily challenge, results, help, statistics and preferences.
 - `src/game/engine.ts` — deterministic puzzle rules and scoring.
-- `src/game/campaign.ts` — deterministic 500-level campaign definitions, playable seeded boards, varied objectives and win-star thresholds.
+- `src/game/campaign.ts` — deterministic 500-level campaign definitions, playable seeded boards, score, tile-clear, chain and colour-target objectives, guaranteed starting target-colour supply, and win-star thresholds.
 - `src/components/BoardGrid.tsx` — responsive, accessible tactile board.
 - `src/storage/save.ts` — resilient, versioned local save model.
 - `src/theme/tokens.ts` — CASCADE palette and tile language.
