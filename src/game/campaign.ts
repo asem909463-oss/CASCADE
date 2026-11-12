@@ -1,4 +1,4 @@
-import { Board, createBoard, hasValidMove, mulberry32 } from './engine';
+import { Board, createBoard, hasValidMove, mulberry32, TILE_COLORS } from './engine';
 
 export const CAMPAIGN_LEVEL_COUNT = 500;
 export const LEVELS_PER_CHAPTER = 50;
@@ -54,7 +54,10 @@ export function createCampaignBoard(level: number): Board {
     if (hasValidMove(board)) return board;
     attempt += 1;
   }
-  return createBoard(mulberry32(seed));
+  // A guaranteed legal fallback: every row contains horizontal same-colour pairs.
+  return Array.from({ length: 8 }, (_, row) =>
+    Array.from({ length: 8 }, (_, col) => TILE_COLORS[(row + Math.floor(col / 2)) % TILE_COLORS.length]),
+  );
 }
 
 export function isCampaignObjectiveComplete(
@@ -79,4 +82,9 @@ export function starsForCampaignScore(score: number, targetScore: number): numbe
   if (score >= Math.ceil(targetScore * 1.75)) return 3;
   if (score >= Math.ceil(targetScore * 1.3)) return 2;
   return 1;
+}
+
+/** Any completed objective earns at least one star, even when it is not score-based. */
+export function starsForCampaignWin(score: number, targetScore: number): number {
+  return Math.max(1, starsForCampaignScore(score, targetScore));
 }

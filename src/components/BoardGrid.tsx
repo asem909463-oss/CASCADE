@@ -100,7 +100,7 @@ function BoardTile({
         style={[styles.tile, preview && styles.preview, { width: size, height: size, backgroundColor: palette.fill, borderColor: palette.edge, transform: [{ scale: pressScale }] }]}
       >
         <View style={[styles.glint, { backgroundColor: palette.highlight }]} />
-        <Text style={[styles.symbol, { fontSize: Math.max(10, size * 0.31) }]}>{palette.symbol}</Text>
+        <Text style={[styles.symbol, { color: palette.symbolColor, fontSize: Math.max(10, size * 0.34) }]}>{palette.symbol}</Text>
       </AnimatedPressable>
     </Animated.View>
   );
@@ -129,8 +129,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tile: {
-    borderRadius: 9,
-    borderBottomWidth: 2.5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderBottomWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -154,9 +155,8 @@ const styles = StyleSheet.create({
     borderRadius: 99,
   },
   symbol: {
-    color: '#FFF9EF',
     fontWeight: '900',
-    opacity: 0.76,
+    opacity: 0.92,
     textAlign: 'center',
     textShadowColor: 'rgba(43,38,31,0.18)',
     textShadowOffset: { width: 0, height: 1 },

@@ -38,7 +38,7 @@ import {
 } from './src/game/engine';
 import { completeDailyChallenge, DEFAULT_SAVE, GameSnapshot, getActiveDailyStreak, loadSave, saveData, SaveData } from './src/storage/save';
 import { COLORS, TYPE } from './src/theme/tokens';
-import { CAMPAIGN_CHAPTERS, CAMPAIGN_LEVEL_COUNT, campaignObjectiveLabel, createCampaignBoard, getCampaignLevel, isCampaignObjectiveComplete, starsForCampaignScore } from './src/game/campaign';
+import { CAMPAIGN_CHAPTERS, CAMPAIGN_LEVEL_COUNT, campaignObjectiveLabel, createCampaignBoard, getCampaignLevel, isCampaignObjectiveComplete, starsForCampaignWin } from './src/game/campaign';
 import { completeCampaignLevel } from './src/storage/save';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -247,7 +247,7 @@ export default function App() {
             },
           }
         : {}),
-      ...(wonCampaign && level ? completeCampaignLevel(current, level.number, finalScore, starsForCampaignScore(finalScore, level.targetScore)) : {}),
+      ...(wonCampaign && level ? completeCampaignLevel(current, level.number, finalScore, starsForCampaignWin(finalScore, level.targetScore)) : {}),
       currentRun: null,
     }));
     setScreen('result');
@@ -558,8 +558,14 @@ function CampaignScreen({ save, onBack, onStart }: { save: SaveData; onBack: () 
     <SimpleShell title="Puzzle journey" eyebrow="500 PUZZLES · 10 CHAPTERS" onBack={onBack}>
       <View style={styles.campaignIntro}>
         <Text style={styles.campaignIntroTitle}>Think ahead. Make every move count.</Text>
-        <Text style={styles.campaignIntroCopy}>Reach each level’s score goal before you run out of moves. Earn up to three stars and unlock the next puzzle.</Text>
-        <Text style={styles.campaignProgress}>{Math.min(500, save.campaignUnlockedLevel - 1)} / 500 UNLOCKED</Text>
+        <Text style={styles.campaignIntroCopy}>Every puzzle has its own objective. Read the board, plan your clears, and earn up to three stars before your moves run out.</Text>
+        <View style={styles.campaignProgressRow}>
+          <Text style={styles.campaignProgress}>{Math.min(500, save.campaignUnlockedLevel - 1)} / 500 COMPLETED</Text>
+          <Text style={styles.campaignProgressPercent}>{Math.round((Math.min(500, save.campaignUnlockedLevel - 1) / 500) * 100)}%</Text>
+        </View>
+        <View style={styles.campaignProgressTrack}>
+          <View style={[styles.campaignProgressFill, { width: `${(Math.min(500, save.campaignUnlockedLevel - 1) / 500) * 100}%` }]} />
+        </View>
       </View>
       {CAMPAIGN_CHAPTERS.map((chapter, chapterIndex) => {
         const first = chapterIndex * 50 + 1;
@@ -571,13 +577,16 @@ function CampaignScreen({ save, onBack, onStart }: { save: SaveData; onBack: () 
               <Text style={styles.chapterTitle}>{chapter}</Text>
               <Text style={styles.chapterProgress}>{completed}/50</Text>
             </View>
+            <View style={styles.chapterProgressTrack}>
+              <View style={[styles.chapterProgressFill, { width: `${(completed / 50) * 100}%` }]} />
+            </View>
             <View style={styles.levelGrid}>
               {Array.from({ length: 50 }, (_, index) => {
                 const level = first + index;
                 const unlocked = level <= save.campaignUnlockedLevel;
                 const stars = save.campaignStars[String(level)] ?? 0;
                 return (
-                  <GameButton key={level} disabled={!unlocked} onPress={() => onStart(level)} style={[styles.levelCell, !unlocked && styles.levelLocked, level === save.campaignUnlockedLevel && styles.levelCurrent]}>
+                  <GameButton key={level} disabled={!unlocked} onPress={() => onStart(level)} style={[styles.levelCell, stars > 0 && styles.levelComplete, !unlocked && styles.levelLocked, level === save.campaignUnlockedLevel && styles.levelCurrent]}>
                     <Text style={[styles.levelCellText, !unlocked && styles.levelLockedText]}>{unlocked ? level : '·'}</Text>
                     <Text style={styles.levelStars}>{stars ? '★'.repeat(stars) : unlocked ? '○' : ''}</Text>
                   </GameButton>
@@ -705,10 +714,14 @@ function GameScreen({
         </View>
       </View>
       {(mode === 'daily' || mode === 'campaign') && (
-        <View style={styles.goalRow}>
-          <Text style={styles.goalText}>{mode === 'campaign' ? 'LEVEL OBJECTIVE' : 'CHALLENGE MARK'}</Text>
-          <View style={styles.goalTrack}><View style={[styles.goalFill, { width: `${Math.min(100, (mode === 'campaign' ? campaignProgress : score / DAILY_GOAL) * 100)}%` }]} /></View>
-          <Text style={styles.goalValue}>{mode === 'campaign' ? campaignObjective : DAILY_GOAL.toLocaleString()}</Text>
+        <View style={styles.goalPanel}>
+          <View style={styles.goalMeta}>
+            <Text style={styles.goalText}>{mode === 'campaign' ? 'LEVEL OBJECTIVE' : 'DAILY TARGET'}</Text>
+            <Text style={styles.goalValue}>{mode === 'campaign' ? campaignObjective : DAILY_GOAL.toLocaleString()}</Text>
+          </View>
+          <View style={styles.goalTrack}>
+            <View style={[styles.goalFill, { width: `${Math.min(100, (mode === 'campaign' ? campaignProgress : score / DAILY_GOAL) * 100)}%` }]} />
+          </View>
         </View>
       )}
       <View style={styles.boardStage}>
@@ -771,7 +784,7 @@ function ResultScreen({
         : mode === 'campaign' ? `PUZZLE JOURNEY · LEVEL ${campaignLevel}` : 'A LOVELY LITTLE RUN'}</Text>
       <Text style={styles.resultTitle}>{mode === 'campaign' ? (campaignWon ? 'Puzzle solved!' : 'Not quite yet.') : isNewBest ? 'New personal best.' : 'Nicely done.'}</Text>
       <Text style={styles.resultScore}>{score.toLocaleString()}</Text>
-      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${starsForCampaignScore(score, getCampaignLevel(campaignLevel).targetScore)} stars earned · new puzzle unlocked` : `Objective: ${campaignObjectiveLabel(getCampaignLevel(campaignLevel))}`) : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
+      <Text style={styles.resultCaption}>{mode === 'campaign' ? (campaignWon ? `${starsForCampaignWin(score, getCampaignLevel(campaignLevel).targetScore)} stars earned · new puzzle unlocked` : `Objective: ${campaignObjectiveLabel(getCampaignLevel(campaignLevel))}`) : mode === 'daily' ? 'points in this daily challenge' : 'points · every little chain counts'}</Text>
       {mode === 'daily' && <Text style={styles.dailyRecord}>CHALLENGE BEST · {dailyBest.toLocaleString()}</Text>}
       <View style={styles.resultDecor}><MiniMosaic width={176} /></View>
       <View style={styles.resultButtons}>
@@ -1019,18 +1032,25 @@ const styles = StyleSheet.create({
   loadingPage: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 15 },
   loadingCopy: { color: COLORS.inkSoft, fontFamily: TYPE.display, fontStyle: 'italic', fontSize: 16 },
   homeContent: { flexGrow: 1, paddingHorizontal: 22, paddingBottom: 20 },
-  campaignIntro: { backgroundColor: '#FFF0D6', padding: 16, marginBottom: 18, borderRadius: 18 },
-  campaignIntroTitle: { color: COLORS.ink, fontSize: 17, fontWeight: '800' },
-  campaignIntroCopy: { color: COLORS.inkSoft, fontSize: 12, lineHeight: 18, marginTop: 6 },
-  campaignProgress: { color: COLORS.coralDeep, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, marginTop: 12 },
-  chapterBlock: { marginBottom: 22 },
-  chapterHeading: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 10 },
+  campaignIntro: { backgroundColor: '#FFF0D6', padding: 17, marginBottom: 18, borderRadius: 20, borderWidth: 1, borderColor: '#FFE2B2' },
+  campaignIntroTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '900', letterSpacing: -0.25 },
+  campaignIntroCopy: { color: COLORS.inkSoft, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  campaignProgressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 7 },
+  campaignProgress: { color: COLORS.coralDeep, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  campaignProgressPercent: { color: COLORS.inkSoft, fontFamily: TYPE.mono, fontSize: 10, fontWeight: '800' },
+  campaignProgressTrack: { height: 7, borderRadius: 8, overflow: 'hidden', backgroundColor: '#F6DDB8' },
+  campaignProgressFill: { height: 7, borderRadius: 8, backgroundColor: COLORS.coral },
+  chapterBlock: { marginBottom: 16, padding: 13, borderRadius: 19, backgroundColor: COLORS.paperBright, borderWidth: 1, borderColor: COLORS.line },
+  chapterHeading: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 },
+  chapterProgressTrack: { height: 4, borderRadius: 8, backgroundColor: '#F2E9DC', overflow: 'hidden', marginBottom: 12 },
+  chapterProgressFill: { height: 4, borderRadius: 8, backgroundColor: COLORS.mint },
   chapterNumber: { color: COLORS.coralDeep, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
   chapterTitle: { flex: 1, color: COLORS.ink, fontSize: 16, fontWeight: '800' },
   chapterProgress: { color: COLORS.muted, fontSize: 10, fontWeight: '800' },
   levelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   levelCell: { width: '17%', minWidth: 43, aspectRatio: 1, backgroundColor: COLORS.paperBright, borderRadius: 12, borderWidth: 1, borderColor: COLORS.line, alignItems: 'center', justifyContent: 'center' },
-  levelCurrent: { backgroundColor: '#FFE1D5', borderColor: COLORS.coral },
+  levelCurrent: { backgroundColor: '#FFE1D5', borderColor: COLORS.coral, borderWidth: 2 },
+  levelComplete: { backgroundColor: '#FFF3D5', borderColor: '#F2D28A' },
   levelLocked: { backgroundColor: '#F1EAE0', opacity: 0.75 },
   levelCellText: { color: COLORS.ink, fontSize: 12, fontWeight: '900' },
   levelLockedText: { color: COLORS.muted },
@@ -1112,23 +1132,24 @@ const styles = StyleSheet.create({
   modeText: { color: COLORS.inkSoft, fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
   levelCount: { minWidth: 42, alignItems: 'flex-end' },
   levelText: { color: COLORS.muted, fontFamily: TYPE.mono, fontSize: 10, fontWeight: '700' },
-  scorePanel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 7 },
+  scorePanel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 15, marginTop: 3, marginBottom: 7, backgroundColor: COLORS.paperBright, borderRadius: 18, borderWidth: 1, borderColor: COLORS.line },
   scoreMain: { gap: 2 },
   scoreLabel: { color: COLORS.muted, fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
   scoreNumber: { color: COLORS.ink, fontFamily: TYPE.mono, fontSize: 34, fontWeight: '800', letterSpacing: -1.5 },
   scoreSide: { minWidth: 98, paddingLeft: 15, borderLeftWidth: 1, borderColor: COLORS.line, alignItems: 'flex-end', gap: 3 },
   scoreSideLabel: { color: COLORS.muted, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
   scoreSideValue: { color: COLORS.inkSoft, fontFamily: TYPE.mono, fontSize: 14, fontWeight: '700' },
-  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 7, marginBottom: 5 },
-  goalText: { color: COLORS.inkSoft, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
-  goalTrack: { flex: 1, height: 4, borderRadius: 9, overflow: 'hidden', backgroundColor: '#E8DFD0' },
-  goalFill: { height: 4, borderRadius: 8, backgroundColor: COLORS.coral },
-  goalValue: { color: COLORS.muted, fontFamily: TYPE.mono, fontSize: 9 },
+  goalPanel: { paddingHorizontal: 13, paddingVertical: 10, marginBottom: 8, borderRadius: 15, backgroundColor: '#FFF1E2', borderWidth: 1, borderColor: '#F4DFC8', gap: 8 },
+  goalMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  goalText: { color: COLORS.coralDeep, fontSize: 9, fontWeight: '900', letterSpacing: 0.9 },
+  goalTrack: { height: 6, borderRadius: 9, overflow: 'hidden', backgroundColor: '#E8DFD0' },
+  goalFill: { height: 6, borderRadius: 8, backgroundColor: COLORS.coral },
+  goalValue: { color: COLORS.inkSoft, fontFamily: TYPE.mono, fontSize: 10, fontWeight: '700', flexShrink: 1, textAlign: 'right' },
   boardStage: { alignItems: 'center', justifyContent: 'center', position: 'relative' },
   clearToast: { position: 'absolute', top: -14, alignSelf: 'center', paddingHorizontal: 13, paddingVertical: 7, minWidth: 62, borderRadius: 13, backgroundColor: COLORS.coral, alignItems: 'center', zIndex: 10, shadowColor: COLORS.shadow, shadowOpacity: 0.16, shadowOffset: { width: 0, height: 3 }, shadowRadius: 6, elevation: 4 },
   clearToastText: { color: COLORS.white, fontFamily: TYPE.mono, fontWeight: '800', fontSize: 13 },
   chainToast: { marginTop: 2, color: '#FFCB70', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
-  gameHint: { minHeight: 45, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 3 },
+  gameHint: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 15, backgroundColor: COLORS.paperBright, borderWidth: 1, borderColor: COLORS.line },
   hintGlyph: { width: 25, height: 25, borderRadius: 9, backgroundColor: '#F3E8D5', alignItems: 'center', justifyContent: 'center' },
   hintGlyphText: { color: COLORS.coral, fontSize: 14 },
   hintCopy: { color: COLORS.inkSoft, fontWeight: '700', fontSize: 13, flex: 1 },

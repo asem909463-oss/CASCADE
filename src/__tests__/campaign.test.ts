@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAMPAIGN_LEVEL_COUNT, CAMPAIGN_CHAPTERS, createCampaignBoard, getCampaignLevel, isCampaignObjectiveComplete, starsForCampaignScore } from '../game/campaign';
+import { CAMPAIGN_LEVEL_COUNT, CAMPAIGN_CHAPTERS, createCampaignBoard, getCampaignLevel, isCampaignObjectiveComplete, starsForCampaignScore, starsForCampaignWin } from '../game/campaign';
 import { hasValidMove } from '../game/engine';
 
 describe('CASCADE campaign', () => {
@@ -10,9 +10,10 @@ describe('CASCADE campaign', () => {
   });
 
   it('creates a deterministic playable board for each level', () => {
-    for (const level of [1, 2, 50, 51, 250, 500]) {
-      expect(createCampaignBoard(level)).toEqual(createCampaignBoard(level));
-      expect(hasValidMove(createCampaignBoard(level))).toBe(true);
+    for (let level = 1; level <= CAMPAIGN_LEVEL_COUNT; level += 1) {
+      const board = createCampaignBoard(level);
+      expect(board).toEqual(createCampaignBoard(level));
+      expect(hasValidMove(board)).toBe(true);
     }
   });
 
@@ -32,6 +33,14 @@ describe('CASCADE campaign', () => {
     expect(isCampaignObjectiveComplete(scoreLevel, scoreLevel.targetScore, 0, 0)).toBe(true);
     expect(isCampaignObjectiveComplete(tileLevel, 0, tileLevel.objectiveTarget, 0)).toBe(true);
     expect(isCampaignObjectiveComplete(chainLevel, 0, 0, chainLevel.objectiveTarget)).toBe(true);
+  });
+
+  it('awards at least one star for every completed objective, including non-score objectives', () => {
+    const goal = getCampaignLevel(1).targetScore;
+    expect(starsForCampaignWin(goal - 1, goal)).toBe(1);
+    expect(starsForCampaignWin(goal, goal)).toBe(1);
+    expect(starsForCampaignWin(Math.ceil(goal * 1.3), goal)).toBe(2);
+    expect(starsForCampaignWin(Math.ceil(goal * 1.75), goal)).toBe(3);
   });
 
   it('awards stars only after the score goal is met', () => {
