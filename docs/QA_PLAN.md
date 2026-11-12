@@ -65,7 +65,9 @@ The score curve and chain timing must be approved before writing expected numeri
 - Rapid repeated taps cannot trigger overlapping board mutations.
 - Input is disabled only for the intended animation/transition window.
 - Board remains usable across supported iPhone screen sizes and safe areas.
-- Reduced-motion and sound/haptics settings are respected.
+- Android application ID is explicit and matches the intended release identity.
+- Reduced-motion and sound/haptics settings are respected, including tile press feedback.
+- Backgrounding the app flushes the latest recoverable run to local storage.
 - Text, colour and selection states remain legible.
 - App background/foreground transitions do not corrupt a move or save.
 
@@ -113,6 +115,7 @@ Do not recommend release until:
 - Crash, performance and privacy checks are reviewed.
 - The public privacy policy URL is live and matches the app's actual data practices.
 - App Store privacy disclosures match the app's SDKs and actual behavior.
+- iOS and Android JavaScript bundles export successfully; these checks are not native release builds.
 - A native iOS archive is built and validated; a JavaScript export alone is not a release build.
 - The exact release commit and build are identified.
 

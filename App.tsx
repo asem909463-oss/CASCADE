@@ -3,6 +3,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import {
   Animated,
   AccessibilityInfo,
+  AppState,
   Alert,
   LayoutAnimation,
   Platform,
@@ -33,7 +34,7 @@ import {
   seedFromDate,
   StatefulRandom,
 } from './src/game/engine';
-import { DEFAULT_SAVE, GameSnapshot, loadSave, saveData, SaveData } from './src/storage/save';
+import { completeDailyChallenge, DEFAULT_SAVE, GameSnapshot, getActiveDailyStreak, loadSave, saveData, SaveData } from './src/storage/save';
 import { COLORS, TYPE } from './src/theme/tokens';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -63,6 +64,8 @@ export default function App() {
   const [inputLocked, setInputLocked] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [save, setSave] = useState<SaveData>({ ...DEFAULT_SAVE });
+  const saveRef = useRef(save);
+  saveRef.current = save;
   const [hydrated, setHydrated] = useState(false);
   const [lastClear, setLastClear] = useState<{ points: number; chain: number } | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
@@ -107,6 +110,16 @@ export default function App() {
   useEffect(() => {
     if (hydrated) void saveData(save);
   }, [hydrated, save]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'inactive' || nextState === 'background') {
+        void saveData(saveRef.current);
+      }
+    });
+    return () => subscription.remove();
+  }, [hydrated]);
 
   const buttonFeedback = useCallback(() => {
     if (save.hapticsEnabled) void Haptics.selectionAsync();
@@ -211,12 +224,7 @@ export default function App() {
       ...(mode === 'daily'
         ? {
             dailyDate: gameDate,
-            dailyStreak: current.lastDailyCompleted === gameDate
-              ? current.dailyStreak
-              : current.lastDailyCompleted === new Date(new Date(`${gameDate}T00:00:00Z`).getTime() - 86400000).toISOString().slice(0, 10)
-                ? current.dailyStreak + 1
-                : 1,
-            lastDailyCompleted: gameDate,
+            ...completeDailyChallenge(current, gameDate),
             dailyBest: Math.max(current.dailyBest, finalScore),
             dailyScores: {
               ...current.dailyScores,
@@ -413,6 +421,7 @@ function HomeScreen({
   onSettings: () => void;
 }) {
   const artWidth = Math.min(206, width * 0.52);
+  const activeDailyStreak = getActiveDailyStreak(save);
   return (
     <ScrollView contentContainerStyle={styles.homeContent} showsVerticalScrollIndicator={false}>
       <View style={styles.homeHeader}>
@@ -442,9 +451,9 @@ function HomeScreen({
         <Text style={styles.dailyStreakSpark}>✦</Text>
         <View style={{ flex: 1 }}>
           <Text style={styles.dailyStreakTitle}>THE DAILY SPARK</Text>
-          <Text style={styles.dailyStreakCopy}>{save.dailyStreak > 0 ? `${save.dailyStreak} day${save.dailyStreak === 1 ? '' : 's'} in a row — keep your rhythm` : 'A fresh little challenge, every day'}</Text>
+          <Text style={styles.dailyStreakCopy}>{activeDailyStreak > 0 ? `${activeDailyStreak} day${activeDailyStreak === 1 ? '' : 's'} in a row — keep your rhythm` : 'Complete today’s puzzle to start a new streak'}</Text>
         </View>
-        <Text style={styles.dailyStreakCount}>{save.dailyStreak}</Text>
+        <Text style={styles.dailyStreakCount}>{activeDailyStreak}</Text>
       </View>
       <View style={styles.menuActions}>
         {save.currentRun && (

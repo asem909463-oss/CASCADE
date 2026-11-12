@@ -21,7 +21,7 @@ npx expo-doctor
 
 Gameplay and local preferences work without a network connection. AsyncStorage stores completed-run records, date-keyed daily results, sound/haptics preferences, and a validated recoverable run snapshot. A ruleset-versioned seeded daily board is deterministic from the UTC date and displays that UTC challenge date. Reduce Motion disables tile and layout animations, and sound/haptics can be toggled independently. No backend or Supabase code is included; backend integration remains outside this client-owned scope.
 
-The score curve, daily progress marker, uniform refill distribution and seven-wave chain safety ceiling are explicit implementation defaults and should be playtested before a balance-focused update. Privacy policy: [PRIVACY.md](./PRIVACY.md) and [privacy.html](./privacy.html). The repository CI checks TypeScript, engine/save tests, dependency advisories and the iOS JavaScript bundle. A successful bundle export is not a substitute for a native iOS build or physical-device QA.
+The score curve, daily progress marker, uniform refill distribution and seven-wave chain safety ceiling are explicit implementation defaults and should be playtested before a balance-focused update. Privacy policy: [PRIVACY.md](./PRIVACY.md) and [privacy.html](./privacy.html). The repository CI checks TypeScript, engine/save tests, dependency advisories, and iOS and Android JavaScript bundle exports. A successful bundle export is not a substitute for native builds or physical-device QA.
 
 ## Project structure
 

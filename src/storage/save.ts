@@ -48,8 +48,38 @@ export const DEFAULT_SAVE: SaveData = {
 };
 
 function isDateKey(value: unknown): value is string {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  return new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+  if (typeof value !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function previousDateKey(date: string): string {
+  return new Date(Date.parse(`${date}T00:00:00.000Z`) - 86400000).toISOString().slice(0, 10);
+}
+
+export function completeDailyChallenge(
+  save: Pick<SaveData, 'dailyStreak' | 'lastDailyCompleted'>,
+  completedDate: string,
+): Pick<SaveData, 'dailyStreak' | 'lastDailyCompleted'> {
+  if (!isDateKey(completedDate)) return save;
+  const lastCompleted = save.lastDailyCompleted;
+  // Resuming an older unfinished daily must never rewind a newer streak.
+  if (lastCompleted && completedDate < lastCompleted) return save;
+  if (lastCompleted === completedDate) return save;
+  return {
+    dailyStreak: lastCompleted === previousDateKey(completedDate) ? save.dailyStreak + 1 : 1,
+    lastDailyCompleted: completedDate,
+  };
+}
+
+export function getActiveDailyStreak(
+  save: Pick<SaveData, 'dailyStreak' | 'lastDailyCompleted'>,
+  today = new Date().toISOString().slice(0, 10),
+): number {
+  if (!isDateKey(today) || !save.lastDailyCompleted) return 0;
+  return save.lastDailyCompleted === today || save.lastDailyCompleted === previousDateKey(today)
+    ? save.dailyStreak
+    : 0;
 }
 
 function nonNegativeInteger(value: unknown, fallback = 0): number {

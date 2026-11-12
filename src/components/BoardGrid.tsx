@@ -88,9 +88,14 @@ function BoardTile({
         accessibilityRole="button"
         accessibilityLabel={`${label}, ${color} tile`}
         accessibilityHint={preview ? 'Selected group. Tap any tile in this group again to clear it.' : 'Tap to inspect this connected group before clearing it.'}
+        accessibilityState={{ selected: preview, disabled }}
         disabled={disabled}
-        onPressIn={() => Animated.spring(pressScale, { toValue: 0.92, speed: 30, bounciness: 5, useNativeDriver: true }).start()}
-        onPressOut={() => Animated.spring(pressScale, { toValue: 1, speed: 25, bounciness: 5, useNativeDriver: true }).start()}
+        onPressIn={() => {
+          if (!reduceMotion) Animated.spring(pressScale, { toValue: 0.92, speed: 30, bounciness: 5, useNativeDriver: true }).start();
+        }}
+        onPressOut={() => {
+          if (!reduceMotion) Animated.spring(pressScale, { toValue: 1, speed: 25, bounciness: 5, useNativeDriver: true }).start();
+        }}
         onPress={onPress}
         style={[styles.tile, preview && styles.preview, { width: size, height: size, backgroundColor: palette.fill, borderColor: palette.edge, transform: [{ scale: pressScale }] }]}
       >

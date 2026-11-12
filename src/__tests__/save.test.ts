@@ -8,7 +8,7 @@ const storage = vi.hoisted(() => ({
 
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: storage }));
 
-import { DEFAULT_SAVE, loadSave, saveData } from '../storage/save';
+import { completeDailyChallenge, DEFAULT_SAVE, getActiveDailyStreak, loadSave, saveData } from '../storage/save';
 
 const validRun = {
   rulesetVersion: DAILY_RULESET_VERSION,
@@ -98,6 +98,47 @@ describe('local save schema', () => {
       currentRun: { ...validRun, rulesetVersion: DAILY_RULESET_VERSION + 1 },
     }));
     await expect(loadSave()).resolves.toMatchObject({ currentRun: null });
+  });
+
+  it('rejects impossible date keys without discarding otherwise valid saved progress', async () => {
+    storage.getItem.mockResolvedValueOnce(JSON.stringify({
+      ...DEFAULT_SAVE,
+      highScore: 4321,
+      dailyDate: '9999-99-99',
+      lastDailyCompleted: '9999-99-99',
+      dailyScores: { '9999-99-99': 9999 },
+    }));
+
+    await expect(loadSave()).resolves.toMatchObject({
+      highScore: 4321,
+      dailyDate: null,
+      lastDailyCompleted: null,
+      dailyScores: {},
+    });
+  });
+
+  it('increments daily streaks only for consecutive challenge dates', () => {
+    const yesterday = { dailyStreak: 4, lastDailyCompleted: '2026-11-11' };
+    expect(completeDailyChallenge(yesterday, '2026-11-12')).toEqual({
+      dailyStreak: 5,
+      lastDailyCompleted: '2026-11-12',
+    });
+    expect(completeDailyChallenge({ dailyStreak: 5, lastDailyCompleted: '2026-11-12' }, '2026-11-12'))
+      .toEqual({ dailyStreak: 5, lastDailyCompleted: '2026-11-12' });
+    expect(completeDailyChallenge({ dailyStreak: 5, lastDailyCompleted: '2026-11-12' }, '2026-11-14'))
+      .toEqual({ dailyStreak: 1, lastDailyCompleted: '2026-11-14' });
+  });
+
+  it('does not let an older resumed daily challenge rewind a newer streak', () => {
+    const current = { dailyStreak: 8, lastDailyCompleted: '2026-11-12' };
+    expect(completeDailyChallenge(current, '2026-11-10')).toEqual(current);
+  });
+
+  it('shows a streak only while today or yesterday is the last completed daily', () => {
+    const current = { dailyStreak: 3, lastDailyCompleted: '2026-11-11' };
+    expect(getActiveDailyStreak(current, '2026-11-12')).toBe(3);
+    expect(getActiveDailyStreak(current, '2026-11-11')).toBe(3);
+    expect(getActiveDailyStreak(current, '2026-11-13')).toBe(0);
   });
 
   it('writes the normalized local save payload through AsyncStorage', async () => {

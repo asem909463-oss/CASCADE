@@ -12,6 +12,7 @@
       "buildNumber": "1"
     },
     "android": {
+      "package": "com.cascade.puzzle",
       "adaptiveIcon": {
         "backgroundColor": "#F7F3EA",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -32,7 +33,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 160,
           "resizeMode": "contain",
-          "backgroundColor": "#172324"
+          "backgroundColor": "#FFF8EE"
         }
       ]
     ]
