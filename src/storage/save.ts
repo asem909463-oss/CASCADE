@@ -25,6 +25,8 @@ export type SaveData = {
   dailyDate: string | null;
   dailyBest: number;
   dailyScores: Record<string, number>;
+  dailyStreak: number;
+  lastDailyCompleted: string | null;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
   currentRun: GameSnapshot | null;
@@ -38,6 +40,8 @@ export const DEFAULT_SAVE: SaveData = {
   dailyDate: null,
   dailyBest: 0,
   dailyScores: {},
+  dailyStreak: 0,
+  lastDailyCompleted: null,
   soundEnabled: true,
   hapticsEnabled: true,
   currentRun: null,
@@ -108,6 +112,8 @@ export async function loadSave(): Promise<SaveData> {
       dailyDate,
       dailyBest,
       dailyScores,
+      dailyStreak: nonNegativeInteger(parsed.dailyStreak),
+      lastDailyCompleted: isDateKey(parsed.lastDailyCompleted) ? parsed.lastDailyCompleted : null,
       soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : DEFAULT_SAVE.soundEnabled,
       hapticsEnabled: typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : DEFAULT_SAVE.hapticsEnabled,
       currentRun: validRun(parsed.currentRun),
