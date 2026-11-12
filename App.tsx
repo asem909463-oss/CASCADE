@@ -62,7 +62,6 @@ export default function App() {
   const [mode, setMode] = useState<Mode>('endless');
   const [campaignLevel, setCampaignLevel] = useState(1);
   const [campaignWon, setCampaignWon] = useState(false);
-  const campaignSuccessRef = useRef(false);
   const [board, setBoard] = useState<Board>(() => createBoard());
   const [score, setScore] = useState(0);
   const [chain, setChain] = useState(0);

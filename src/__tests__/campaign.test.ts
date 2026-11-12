@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAMPAIGN_LEVEL_COUNT, CAMPAIGN_CHAPTERS, createCampaignBoard, getCampaignLevel, starsForCampaignScore } from '../game/campaign';
+import { CAMPAIGN_LEVEL_COUNT, CAMPAIGN_CHAPTERS, createCampaignBoard, getCampaignLevel, isCampaignObjectiveComplete, starsForCampaignScore } from '../game/campaign';
 import { hasValidMove } from '../game/engine';
 
 describe('CASCADE campaign', () => {
@@ -20,6 +20,18 @@ describe('CASCADE campaign', () => {
     expect(getCampaignLevel(500).targetScore).toBeGreaterThan(getCampaignLevel(1).targetScore);
     expect(getCampaignLevel(1).moveLimit).toBe(18);
     expect(getCampaignLevel(500).moveLimit).toBeGreaterThanOrEqual(10);
+  });
+
+  it('varies campaign objectives between score, tile-clearing and chain puzzles', () => {
+    const scoreLevel = getCampaignLevel(1);
+    const tileLevel = getCampaignLevel(3);
+    const chainLevel = getCampaignLevel(5);
+    expect(scoreLevel.objective).toBe('score');
+    expect(tileLevel.objective).toBe('tiles');
+    expect(chainLevel.objective).toBe('chain');
+    expect(isCampaignObjectiveComplete(scoreLevel, scoreLevel.targetScore, 0, 0)).toBe(true);
+    expect(isCampaignObjectiveComplete(tileLevel, 0, tileLevel.objectiveTarget, 0)).toBe(true);
+    expect(isCampaignObjectiveComplete(chainLevel, 0, 0, chainLevel.objectiveTarget)).toBe(true);
   });
 
   it('awards stars only after the score goal is met', () => {
