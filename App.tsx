@@ -516,7 +516,7 @@ function MiniMosaic({ width }: { width: number }) {
     motion.start();
     return () => motion.stop();
   }, [float]);
-  const colors = ['#F06B57', '#F4BD56', '#6FB99E', '#6E9DCA', '#9D83C7'];
+  const colors = [COLORS.coral, COLORS.gold, COLORS.mint, COLORS.blue, COLORS.violet];
   const sequence = [0, 2, 1, 3, 1, 0, 4, 2, 3, 4, 0, 2, 1, 3, 4, 0];
   return (
     <View style={[styles.mosaicWrap, { width, height: width * 0.68 }]}>
@@ -920,7 +920,7 @@ const styles = StyleSheet.create({
   stoneLow: { top: 17, left: 11, backgroundColor: COLORS.coral },
   brandName: { fontSize: 13, color: COLORS.ink, fontWeight: '900', letterSpacing: 2.1 },
   headerActions: { flexDirection: 'row', gap: 8 },
-  iconButton: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0EADD', borderWidth: 1, borderColor: COLORS.line },
+  iconButton: { width: 42, height: 42, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF0DF', borderWidth: 1, borderColor: COLORS.line },
   iconButtonText: { fontSize: 20, color: COLORS.ink, fontWeight: '500', marginTop: -1 },
   backGlyph: { fontSize: 35, fontWeight: '300', lineHeight: 39, marginTop: -6 },
   homeHero: { alignItems: 'center', marginTop: 22 },
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
   dailyStreakTitle: { color: '#B87531', fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
   dailyStreakCopy: { color: '#8F725B', fontSize: 10, marginTop: 3 },
   dailyStreakCount: { color: '#E99C3E', fontFamily: TYPE.mono, fontSize: 23, fontWeight: '900' },
-  mosaicOrb: { position: 'absolute', backgroundColor: '#EFE9DD', opacity: 0.92 },
+  mosaicOrb: { position: 'absolute', backgroundColor: '#FFF0DF', opacity: 0.92 },
   mosaicGrid: { width: '67%', aspectRatio: 1, flexDirection: 'row', flexWrap: 'wrap', padding: 5, gap: 4, transform: [{ rotate: '-4deg' }], zIndex: 1 },
   mosaicTile: { width: '22%', height: '22%', borderRadius: 8, borderBottomWidth: 2.5, borderBottomColor: 'rgba(40,40,40,0.18)', alignItems: 'center', justifyContent: 'center' },
   mosaicGlint: { position: 'absolute', top: 3, left: 4, right: 4, height: 2, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.65)' },
@@ -955,14 +955,13 @@ const styles = StyleSheet.create({
   resumeTitle: { color: COLORS.ink, fontSize: 13, fontWeight: '800' },
   resumeSubtitle: { color: COLORS.muted, fontSize: 10.5 },
   primaryButton: { minHeight: 67, borderRadius: 20, backgroundColor: COLORS.coral, paddingHorizontal: 19, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: COLORS.shadow, shadowOpacity: 0.15, shadowOffset: { width: 0, height: 5 }, shadowRadius: 11, elevation: 3 },
-  primaryPressed: { transform: [{ scale: 0.987 }], backgroundColor: '#243536' },
   primaryTextWrap: { gap: 3 },
   primaryTitle: { color: COLORS.white, fontSize: 16, fontWeight: '800', letterSpacing: 0.2 },
   primarySubtitle: { color: '#FFF0E7', fontSize: 11 },
   primaryArrow: { width: 34, height: 34, borderRadius: 12, backgroundColor: COLORS.gold, alignItems: 'center', justifyContent: 'center' },
   primaryArrowText: { color: '#9B5A27', fontSize: 18, fontWeight: '800', marginTop: -2 },
   dailyCard: { minHeight: 66, borderRadius: 19, backgroundColor: COLORS.paperBright, borderWidth: 1, borderColor: COLORS.line, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 11 },
-  dailySeal: { width: 36, height: 36, borderRadius: 13, backgroundColor: '#FAE8BF', alignItems: 'center', justifyContent: 'center' },
+  dailySeal: { width: 36, height: 36, borderRadius: 13, backgroundColor: '#FFE6B2', alignItems: 'center', justifyContent: 'center' },
   dailySealText: { color: '#9F7024', fontFamily: TYPE.display, fontWeight: '700', fontSize: 19 },
   dailyTextWrap: { flex: 1, gap: 4 },
   dailyTitle: { color: COLORS.ink, fontSize: 14, fontWeight: '800' },
