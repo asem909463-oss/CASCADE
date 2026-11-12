@@ -1,8 +1,7 @@
 # CASCADE — Initial QA & Test Plan
 
-**QA owner:** Claude  
-**Implementation owners:** Manus (client), Perplexity (backend)  
-**Status:** Test design only; no implementation has been audited yet.
+**QA and implementation owner:** ChatGPT  
+**Status:** Test design baseline; implementation is underway and every test result must be verified before being reported.
 
 ## 1. Pure game-engine tests
 
