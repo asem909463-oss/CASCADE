@@ -168,6 +168,21 @@ describe('local save schema', () => {
     expect(replay.campaignBestScores['1']).toBe(1200);
   });
 
+  it('restores campaign stars and best scores after loading, while rejecting invalid keys', async () => {
+    storage.getItem.mockResolvedValue(JSON.stringify({
+      ...DEFAULT_SAVE,
+      campaignUnlockedLevel: 12,
+      campaignStars: { '1': 3, '12': 2, '0': 3, '501': 3, 'abc': 2 },
+      campaignBestScores: { '1': 2400, '12': 1800, '0': 900, '501': 5000, 'abc': 100 },
+    }));
+
+    await expect(loadSave()).resolves.toMatchObject({
+      campaignUnlockedLevel: 12,
+      campaignStars: { '1': 3, '12': 2 },
+      campaignBestScores: { '1': 2400, '12': 1800 },
+    });
+  });
+
   it('rejects invalid campaign completion records', () => {
     expect(completeCampaignLevel(DEFAULT_SAVE, 501, 900, 3)).toEqual(DEFAULT_SAVE);
   });
