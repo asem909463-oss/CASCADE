@@ -8,7 +8,7 @@ const storage = vi.hoisted(() => ({
 
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: storage }));
 
-import { completeCampaignLevel, completeDailyChallenge, DEFAULT_SAVE, getActiveDailyStreak, loadSave, saveData } from '../storage/save';
+import { completeCampaignLevel, completeDailyChallenge, completeDailyChallengeProgress, DEFAULT_SAVE, getActiveDailyStreak, loadSave, saveData } from '../storage/save';
 
 const validRun = {
   rulesetVersion: DAILY_RULESET_VERSION,
@@ -148,6 +148,18 @@ describe('local save schema', () => {
   it('does not let an older resumed daily challenge rewind a newer streak', () => {
     const current = { dailyStreak: 8, lastDailyCompleted: '2026-11-12' };
     expect(completeDailyChallenge(current, '2026-11-10')).toEqual(current);
+  });
+
+  it('tracks the longest daily streak and preserves it when a streak resets', () => {
+    const first = completeDailyChallengeProgress({ dailyStreak: 4, longestDailyStreak: 6, lastDailyCompleted: '2026-11-11' }, '2026-11-12');
+    expect(first).toEqual({ dailyStreak: 5, longestDailyStreak: 6, lastDailyCompleted: '2026-11-12' });
+    const reset = completeDailyChallengeProgress(first, '2026-11-14');
+    expect(reset).toEqual({ dailyStreak: 1, longestDailyStreak: 6, lastDailyCompleted: '2026-11-14' });
+  });
+
+  it('migrates old saves by preserving at least the current daily streak as the longest', async () => {
+    storage.getItem.mockResolvedValueOnce(JSON.stringify({ ...DEFAULT_SAVE, dailyStreak: 9, longestDailyStreak: 4 }));
+    await expect(loadSave()).resolves.toMatchObject({ dailyStreak: 9, longestDailyStreak: 9 });
   });
 
   it('shows a streak only while today or yesterday is the last completed daily', () => {
