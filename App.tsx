@@ -36,7 +36,7 @@ import {
   seedFromDate,
   StatefulRandom,
 } from './src/game/engine';
-import { completeDailyChallenge, DEFAULT_SAVE, GameSnapshot, getActiveDailyStreak, loadSave, saveData, SaveData } from './src/storage/save';
+import { completeDailyChallengeProgress, DEFAULT_SAVE, GameSnapshot, getActiveDailyStreak, loadSave, saveData, SaveData } from './src/storage/save';
 import { COLORS, TYPE } from './src/theme/tokens';
 import { CAMPAIGN_CHAPTERS, CAMPAIGN_LEVEL_COUNT, campaignObjectiveLabel, createCampaignBoard, getCampaignLevel, isCampaignObjectiveComplete, starsForCampaignWin } from './src/game/campaign';
 import { completeCampaignLevel } from './src/storage/save';
@@ -241,7 +241,7 @@ export default function App() {
       ...(mode === 'daily'
         ? {
             dailyDate: gameDate,
-            ...completeDailyChallenge(current, gameDate),
+            ...completeDailyChallengeProgress(current, gameDate),
             dailyBest: Math.max(current.dailyBest, finalScore),
             dailyScores: {
               ...current.dailyScores,
@@ -460,6 +460,7 @@ function HomeScreen({
 }) {
   const previewWidth = Math.min(width - 64, 246);
   const activeDailyStreak = getActiveDailyStreak(save);
+  const nextSparkBadge = [3, 7, 14, 30].find((days) => days > save.longestDailyStreak);
   const nextCampaignLevel = Math.min(CAMPAIGN_LEVEL_COUNT, save.campaignUnlockedLevel);
   const nextCampaignChapter = getCampaignLevel(nextCampaignLevel).chapterName;
   return (
@@ -497,7 +498,7 @@ function HomeScreen({
         <Text style={styles.dailyStreakSpark}>✦</Text>
         <View style={{ flex: 1 }}>
           <Text style={styles.dailyStreakTitle}>THE DAILY SPARK</Text>
-          <Text style={styles.dailyStreakCopy}>{activeDailyStreak > 0 ? `${activeDailyStreak} day${activeDailyStreak === 1 ? '' : 's'} in a row — keep your rhythm` : 'Complete today’s puzzle to start a new streak'}</Text>
+          <Text style={styles.dailyStreakCopy}>{activeDailyStreak > 0 ? `${activeDailyStreak} day${activeDailyStreak === 1 ? '' : 's'} in a row · ${nextSparkBadge ? `${nextSparkBadge}-day badge next` : 'all Spark badges earned'}` : `Complete today’s puzzle to start a streak · ${nextSparkBadge ? `${nextSparkBadge}-day badge ahead` : 'all Spark badges earned'}`}</Text>
         </View>
         <Text style={styles.dailyStreakCount}>{activeDailyStreak}</Text>
       </View>
@@ -846,7 +847,26 @@ function StatsScreen({ save, onBack }: { save: SaveData; onBack: () => void }) {
           accent={COLORS.violet}
         />
       </View>
-      <StatCard label="DAILY SPARK STREAK" value={`${getActiveDailyStreak(save)} days`} accent={COLORS.coral} />
+      <View style={styles.statGrid}>
+        <StatCard label="CURRENT STREAK" value={`${getActiveDailyStreak(save)} days`} accent={COLORS.coral} />
+        <StatCard label="LONGEST STREAK" value={`${save.longestDailyStreak} days`} accent={COLORS.gold} />
+      </View>
+      <View style={styles.streakRewards}>
+        <Text style={styles.streakRewardsTitle}>DAILY SPARK BADGES</Text>
+        <Text style={styles.streakRewardsCopy}>Keep a daily rhythm to collect these milestones.</Text>
+        <View style={styles.streakBadgeGrid}>
+          {[3, 7, 14, 30].map((days) => {
+            const earned = save.longestDailyStreak >= days;
+            return (
+              <View key={days} style={[styles.streakBadge, earned && styles.streakBadgeEarned]}>
+                <Text style={[styles.streakBadgeIcon, earned && styles.streakBadgeIconEarned]}>{earned ? '✦' : '·'}</Text>
+                <Text style={styles.streakBadgeDays}>{days} DAYS</Text>
+                <Text style={styles.streakBadgeStatus}>{earned ? 'EARNED' : `${Math.max(0, days - save.longestDailyStreak)} TO GO`}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
       <Text style={styles.localNote}>Your progress lives on this device. No account needed.</Text>
     </SimpleShell>
   );
@@ -1214,6 +1234,16 @@ const styles = StyleSheet.create({
   statAccent: { width: 17, height: 4, borderRadius: 5, marginBottom: 10 },
   statCardLabel: { color: COLORS.muted, fontSize: 8, fontWeight: '900', letterSpacing: 1.2 },
   statCardValue: { color: COLORS.ink, fontSize: 18, fontWeight: '800', marginTop: 7 },
+  streakRewards: { marginTop: 14, padding: 16, borderRadius: 19, backgroundColor: '#FFF0D6', borderWidth: 1, borderColor: '#FFE2B2' },
+  streakRewardsTitle: { color: COLORS.coralDeep, fontSize: 9, fontWeight: '900', letterSpacing: 1.4 },
+  streakRewardsCopy: { color: COLORS.inkSoft, fontSize: 11, marginTop: 5, marginBottom: 12 },
+  streakBadgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  streakBadge: { flexGrow: 1, flexBasis: '22%', minWidth: 66, paddingVertical: 9, paddingHorizontal: 5, alignItems: 'center', borderRadius: 13, backgroundColor: '#F2E9DC', borderWidth: 1, borderColor: '#E7D8C5' },
+  streakBadgeEarned: { backgroundColor: '#FFF9E8', borderColor: '#EAC56C' },
+  streakBadgeIcon: { color: '#B5A899', fontSize: 18, fontWeight: '900' },
+  streakBadgeIconEarned: { color: '#D69A36' },
+  streakBadgeDays: { color: COLORS.ink, fontSize: 9, fontWeight: '900', marginTop: 3 },
+  streakBadgeStatus: { color: COLORS.muted, fontSize: 7, fontWeight: '900', marginTop: 3, letterSpacing: 0.4 },
   localNote: { marginTop: 20, color: COLORS.muted, fontSize: 12, textAlign: 'center', lineHeight: 18 },
   helpCard: { borderRadius: 21, backgroundColor: COLORS.paperBright, borderWidth: 1, borderColor: COLORS.line, paddingHorizontal: 16, paddingVertical: 2 },
   helpStep: { flexDirection: 'row', gap: 12, paddingVertical: 14, borderBottomWidth: 1, borderColor: '#EEE9DF' },
