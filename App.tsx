@@ -562,6 +562,7 @@ const HOME_PREVIEW_GROUP = (() => {
 
 
 function CampaignScreen({ save, onBack, onStart }: { save: SaveData; onBack: () => void; onStart: (level: number) => void }) {
+  const totalStars = Object.values(save.campaignStars).reduce((total, stars) => total + stars, 0);
   return (
     <SimpleShell title="Puzzle journey" eyebrow="500 PUZZLES · 10 CHAPTERS" onBack={onBack}>
       <View style={styles.campaignIntro}>
@@ -574,16 +575,19 @@ function CampaignScreen({ save, onBack, onStart }: { save: SaveData; onBack: () 
         <View style={styles.campaignProgressTrack}>
           <View style={[styles.campaignProgressFill, { width: `${(Math.min(500, save.campaignUnlockedLevel - 1) / 500) * 100}%` }]} />
         </View>
+        <Text style={styles.campaignProgress}>★ {totalStars.toLocaleString()} / 1,500 STARS EARNED</Text>
       </View>
       {CAMPAIGN_CHAPTERS.map((chapter, chapterIndex) => {
         const first = chapterIndex * 50 + 1;
         const completed = Math.max(0, Math.min(50, save.campaignUnlockedLevel - first));
+        const chapterStars = Array.from({ length: 50 }, (_, index) => save.campaignStars[String(first + index)] ?? 0)
+          .reduce((total, stars) => total + stars, 0);
         return (
           <View key={chapter} style={styles.chapterBlock}>
             <View style={styles.chapterHeading}>
               <Text style={styles.chapterNumber}>CHAPTER {String(chapterIndex + 1).padStart(2, '0')}</Text>
               <Text style={styles.chapterTitle}>{chapter}</Text>
-              <Text style={styles.chapterProgress}>{completed}/50</Text>
+              <Text style={styles.chapterProgress}>{completed}/50 · ★ {chapterStars}/150</Text>
             </View>
             <View style={styles.chapterProgressTrack}>
               <View style={[styles.chapterProgressFill, { width: `${(completed / 50) * 100}%` }]} />
@@ -594,7 +598,13 @@ function CampaignScreen({ save, onBack, onStart }: { save: SaveData; onBack: () 
                 const unlocked = level <= save.campaignUnlockedLevel;
                 const stars = save.campaignStars[String(level)] ?? 0;
                 return (
-                  <GameButton key={level} disabled={!unlocked} onPress={() => onStart(level)} style={[styles.levelCell, stars > 0 && styles.levelComplete, !unlocked && styles.levelLocked, level === save.campaignUnlockedLevel && styles.levelCurrent]}>
+                  <GameButton
+                    key={level}
+                    disabled={!unlocked}
+                    onPress={() => onStart(level)}
+                    accessibilityLabel={`Level ${level}, ${stars} of 3 stars${unlocked ? '' : ', locked'}`}
+                    style={[styles.levelCell, stars > 0 && styles.levelComplete, !unlocked && styles.levelLocked, level === save.campaignUnlockedLevel && styles.levelCurrent]}
+                  >
                     <Text style={[styles.levelCellText, !unlocked && styles.levelLockedText]}>{unlocked ? level : '·'}</Text>
                     <Text style={styles.levelStars}>{stars ? '★'.repeat(stars) : unlocked ? '○' : ''}</Text>
                   </GameButton>
