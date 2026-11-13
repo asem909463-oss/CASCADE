@@ -578,6 +578,13 @@ function CampaignScreen({ save, onBack, onStart }: { save: SaveData; onBack: () 
         </View>
         <Text style={styles.campaignProgress}>★ {totalStars.toLocaleString()} / 1,500 STARS EARNED</Text>
       </View>
+      <View style={styles.campaignContinue}>
+        <PrimaryButton
+          title={`Continue · Level ${String(Math.min(CAMPAIGN_LEVEL_COUNT, save.campaignUnlockedLevel)).padStart(3, '0')}`}
+          subtitle={`${getCampaignLevel(Math.min(CAMPAIGN_LEVEL_COUNT, save.campaignUnlockedLevel)).chapterName} · Pick up where you left off`}
+          onPress={() => onStart(Math.min(CAMPAIGN_LEVEL_COUNT, save.campaignUnlockedLevel))}
+        />
+      </View>
       {CAMPAIGN_CHAPTERS.map((chapter, chapterIndex) => {
         const first = chapterIndex * 50 + 1;
         const completed = Math.max(0, Math.min(50, save.campaignUnlockedLevel - first));
@@ -1094,6 +1101,7 @@ const styles = StyleSheet.create({
   campaignIntro: { backgroundColor: '#FFF0D6', padding: 17, marginBottom: 18, borderRadius: 20, borderWidth: 1, borderColor: '#FFE2B2' },
   campaignIntroTitle: { color: COLORS.ink, fontSize: 18, fontWeight: '900', letterSpacing: -0.25 },
   campaignIntroCopy: { color: COLORS.inkSoft, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  campaignContinue: { marginBottom: 15 },
   campaignProgressRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 7 },
   campaignProgress: { color: COLORS.coralDeep, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
   campaignProgressPercent: { color: COLORS.inkSoft, fontFamily: TYPE.mono, fontSize: 10, fontWeight: '800' },
