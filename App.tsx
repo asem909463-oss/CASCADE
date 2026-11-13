@@ -732,6 +732,17 @@ function GameScreen({
           )}
         </View>
       </View>
+      {mode === 'endless' && best > 0 && (
+        <View style={styles.recordProgressPanel} accessibilityLabel={score >= best ? 'New personal best pace' : `${(best - score).toLocaleString()} points until your personal best`}>
+          <View style={styles.recordProgressMeta}>
+            <Text style={styles.recordProgressLabel}>PERSONAL BEST PACE</Text>
+            <Text style={styles.recordProgressValue}>{Math.min(100, Math.round((score / best) * 100))}%</Text>
+          </View>
+          <View style={styles.recordProgressTrack}>
+            <View style={[styles.recordProgressFill, { width: `${Math.min(100, (score / best) * 100)}%`, backgroundColor: score >= best ? COLORS.mint : COLORS.coral }]} />
+          </View>
+        </View>
+      )}
       {(mode === 'daily' || mode === 'campaign') && (
         <View style={styles.goalPanel}>
           <View style={styles.goalMeta}>
@@ -1187,6 +1198,12 @@ const styles = StyleSheet.create({
   scoreSide: { minWidth: 102, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 15, backgroundColor: '#FFF0D6', borderWidth: 1, borderColor: '#F5DDB5', alignItems: 'flex-end', gap: 3 },
   scoreSideLabel: { color: COLORS.muted, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
   scoreSideValue: { color: COLORS.inkSoft, fontFamily: TYPE.mono, fontSize: 14, fontWeight: '700' },
+  recordProgressPanel: { marginTop: -1, marginBottom: 7, paddingHorizontal: 13, paddingVertical: 8, borderRadius: 14, backgroundColor: '#FFF8EF', borderWidth: 1, borderColor: '#F1E2D0', gap: 6 },
+  recordProgressMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  recordProgressLabel: { color: COLORS.muted, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
+  recordProgressValue: { color: COLORS.inkSoft, fontFamily: TYPE.mono, fontSize: 9, fontWeight: '800' },
+  recordProgressTrack: { height: 5, borderRadius: 8, overflow: 'hidden', backgroundColor: '#EFE6D9' },
+  recordProgressFill: { height: 5, borderRadius: 8 },
   goalPanel: { paddingHorizontal: 14, paddingVertical: 11, marginBottom: 8, borderRadius: 17, backgroundColor: '#FFF2DE', borderWidth: 1, borderColor: '#F1DAB6', gap: 8 },
   goalMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   goalText: { color: COLORS.coralDeep, fontSize: 9, fontWeight: '900', letterSpacing: 0.9 },
