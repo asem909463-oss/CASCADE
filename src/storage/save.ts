@@ -26,6 +26,7 @@ export type SaveData = {
   dailyBest: number;
   dailyScores: Record<string, number>;
   dailyStreak: number;
+  longestDailyStreak: number;
   lastDailyCompleted: string | null;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
@@ -44,6 +45,7 @@ export const DEFAULT_SAVE: SaveData = {
   dailyBest: 0,
   dailyScores: {},
   dailyStreak: 0,
+  longestDailyStreak: 0,
   lastDailyCompleted: null,
   soundEnabled: true,
   hapticsEnabled: true,
@@ -75,6 +77,17 @@ export function completeDailyChallenge(
   return {
     dailyStreak: lastCompleted === previousDateKey(completedDate) ? save.dailyStreak + 1 : 1,
     lastDailyCompleted: completedDate,
+  };
+}
+
+export function completeDailyChallengeProgress(
+  save: Pick<SaveData, 'dailyStreak' | 'longestDailyStreak' | 'lastDailyCompleted'>,
+  completedDate: string,
+): Pick<SaveData, 'dailyStreak' | 'longestDailyStreak' | 'lastDailyCompleted'> {
+  const progress = completeDailyChallenge(save, completedDate);
+  return {
+    ...progress,
+    longestDailyStreak: Math.max(save.longestDailyStreak, progress.dailyStreak),
   };
 }
 
@@ -176,6 +189,7 @@ export async function loadSave(): Promise<SaveData> {
       dailyBest,
       dailyScores,
       dailyStreak: nonNegativeInteger(parsed.dailyStreak),
+      longestDailyStreak: Math.max(nonNegativeInteger(parsed.longestDailyStreak), nonNegativeInteger(parsed.dailyStreak)),
       lastDailyCompleted: isDateKey(parsed.lastDailyCompleted) ? parsed.lastDailyCompleted : null,
       soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : DEFAULT_SAVE.soundEnabled,
       hapticsEnabled: typeof parsed.hapticsEnabled === 'boolean' ? parsed.hapticsEnabled : DEFAULT_SAVE.hapticsEnabled,
